@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:layout_margin="5dp"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <android.support.design.widget.TextInputLayout
+                style="@style/login_textinput_layout"
+                android:layout_weight="1">
+
+                <android.support.v7.widget.AppCompatMultiAutoCompleteTextView
+                    android:inputType="phone"
+                    android:imeOptions="actionNext"
+                    android:id="@+id/join_et_phone"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:hint="手机号" />
+
+
+            </android.support.design.widget.TextInputLayout>
+
+            <Button
+                android:id="@+id/join_btn_code"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_margin="5dp"
+                android:background="@drawable/login_blue_bg"
+                android:gravity="center"
+                android:text="获取验证码"
+                android:textColor="@color/colorWhite" />
+
+        </LinearLayout>
+
+        <android.support.design.widget.TextInputLayout style="@style/login_textinput_layout">
+
+            <android.support.v7.widget.AppCompatMultiAutoCompleteTextView
+                android:inputType="number"
+                android:imeOptions="actionNext" android:id="@+id/join_et_code"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:hint="验证码" />
+
+
+        </android.support.design.widget.TextInputLayout>
+
+        <android.support.design.widget.TextInputLayout style="@style/login_textinput_layout">
+
+            <android.support.v7.widget.AppCompatMultiAutoCompleteTextView
+                android:inputType="textPassword"
+                android:imeOptions="actionDone" android:id="@+id/join_et_password"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:hint="请输入您的密码" />
+
+
+        </android.support.design.widget.TextInputLayout>
+
+        <Button
+            android:id="@+id/join_btn_join"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="5dp"
+            android:background="@drawable/login_blue_bg"
+            android:text="注册"
+            android:textColor="@color/colorWhite"
+            android:textSize="16sp" />
+
+    </LinearLayout>
+</RelativeLayout>

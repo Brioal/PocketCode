@@ -1,0 +1,229 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.design.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#cfcece"
+    tools:context=".activity.UserEditActivity">
+
+    <android.support.v7.widget.Toolbar
+        android:id="@+id/user_edit_toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        app:subtitleTextColor="@color/colorWhite"
+        app:theme="@style/WhiteToolBar"
+        app:title="修改资料"
+        app:titleTextColor="@color/colorWhite">
+
+    </android.support.v7.widget.Toolbar>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginTop="?attr/actionBarSize">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:id="@+id/user_edit_headLayout"
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                android:background="@color/colorWhite"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    style="@style/user_info_edit_tv"
+                    android:text="头像" />
+
+                <com.brioal.pocketcode.view.CircleImageView
+                    android:id="@+id/user_edit_head"
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
+                    android:layout_gravity="center"
+                    android:src="@mipmap/ic_launcher" />
+
+            </LinearLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="0.5dp"
+                android:background="#00000000" />
+
+            <LinearLayout
+                android:id="@+id/user_edit_nameLayout"
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                android:background="@color/colorWhite"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    style="@style/user_info_edit_tv"
+                    android:text="昵称"
+                    android:id="@+id/textView2" />
+
+                <TextView
+                    android:id="@+id/user_edit_name"
+                    style="@style/user_info_edit_tv"
+                    android:layout_marginRight="10dp"
+                    android:gravity="center_vertical|right"
+                    android:text="名称"
+                    android:textColor="#c8484646" />
+
+            </LinearLayout>
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="0.5dp"
+                android:background="#00000000" />
+
+            <LinearLayout
+                android:id="@+id/user_edit_descLayout"
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                android:background="@color/colorWhite"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    style="@style/user_info_edit_tv"
+                    android:text="简介"
+                    android:id="@+id/textView" />
+
+                <TextView
+                    android:id="@+id/user_edit_desc"
+                    style="@style/user_info_edit_tv"
+                    android:layout_marginRight="10dp"
+                    android:gravity="center_vertical|right"
+                    android:text="简介"
+                    android:textColor="#c8484646" />
+
+            </LinearLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="0.5dp"
+                android:background="#00000000" />
+
+            <LinearLayout
+                android:id="@+id/user_edit_favoriteLayout"
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                android:background="@color/colorWhite"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    style="@style/user_info_edit_tv"
+                    android:text="擅长领域" />
+
+                <TextView
+                    android:id="@+id/user_edit_favorite"
+                    style="@style/user_info_edit_tv"
+                    android:layout_marginRight="10dp"
+                    android:gravity="center_vertical|right"
+                    android:text="擅长"
+                    android:textColor="#c8484646" />
+
+            </LinearLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="0.5dp"
+                android:background="#00000000" />
+
+            <LinearLayout
+                android:id="@+id/user_edit_blogLayout"
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                android:background="@color/colorWhite"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    style="@style/user_info_edit_tv"
+                    android:text="博客地址" />
+
+                <TextView
+                    android:id="@+id/user_edit_blog"
+                    style="@style/user_info_edit_tv"
+                    android:layout_marginRight="10dp"
+                    android:gravity="center_vertical|right"
+                    android:text="博客"
+                    android:textColor="#c8484646" />
+
+            </LinearLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="0.5dp"
+                android:background="#00000000" />
+
+            <LinearLayout
+                android:id="@+id/user_edit_GitHubLayout"
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                android:background="@color/colorWhite"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    style="@style/user_info_edit_tv"
+                    android:text="GitHub地址" />
+
+                <TextView
+                    android:id="@+id/user_edit_github"
+                    style="@style/user_info_edit_tv"
+                    android:layout_marginRight="10dp"
+                    android:gravity="center_vertical|right"
+                    android:text="GitHub"
+                    android:textColor="#c8484646" />
+
+            </LinearLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="0.5dp"
+                android:background="#00000000" />
+
+            <LinearLayout
+                android:id="@+id/user_edit_qqLayout"
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                android:background="@color/colorWhite"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    style="@style/user_info_edit_tv"
+                    android:text="QQ" />
+
+                <TextView
+                    android:id="@+id/user_edit_qq"
+                    style="@style/user_info_edit_tv"
+                    android:layout_marginRight="10dp"
+                    android:gravity="center_vertical|right"
+                    android:text="QQ"
+                    android:textColor="#c8484646" />
+
+            </LinearLayout>
+
+            <Button
+                android:id="@+id/user_edit_btn_out"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="5dp"
+                android:background="@color/colorWhite"
+                android:gravity="center"
+                android:text="退出登录"
+                android:textColor="#994848" />
+
+        </LinearLayout>
+
+
+    </ScrollView>
+</android.support.design.widget.CoordinatorLayout>
