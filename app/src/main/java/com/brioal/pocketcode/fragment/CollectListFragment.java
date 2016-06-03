@@ -1,13 +1,13 @@
 package com.brioal.pocketcode.fragment;
 
 import android.content.Context;
-import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -24,8 +24,6 @@ import com.brioal.pocketcode.util.BrioalConstan;
 import com.brioal.pocketcode.util.NetWorkUtil;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 import cn.bmob.v3.BmobQuery;
@@ -45,6 +43,7 @@ public class CollectListFragment extends Fragment implements FragmentInterface {
     private List<CollectEnity> mList;
     private CollectAdapter mAdapter;
     private RecyclerView mRecyclerView;
+    private SwipeRefreshLayout mRefreshLayout;
     private Runnable mRunnable = new Runnable() {
         @Override
         public void run() {
@@ -75,25 +74,18 @@ public class CollectListFragment extends Fragment implements FragmentInterface {
         } else {
             mList.clear();
         }
-        SQLiteDatabase db = mHelper.getReadableDatabase();
-        Cursor cursor = db.rawQuery("select * from Collect", null);
-        cursor.moveToFirst();
-        while (cursor.moveToNext()) {
-            CollectEnity enity = new CollectEnity(cursor.getString(1), cursor.getString(2));
-            mList.add(enity);
+        mList = BrioalConstan.getmDataUtil(mContext).getCollects();
+        if (mList.size() > 0) {
+            mHandler.sendEmptyMessage(0);
         }
-        mHandler.sendEmptyMessage(0);
         if (NetWorkUtil.isNetworkConnected(mContext)) {
             BmobQuery<CollectEnity> query = new BmobQuery<>();
+            query.order("-createdAt");
             query.findObjects(mContext, new FindListener<CollectEnity>() {
                 @Override
                 public void onSuccess(List<CollectEnity> list) {
                     mList = list;
                     Log.i(TAG, "onSuccess: 加载收藏成功" + list.size());
-                    if (mList.size() > 1) {
-                        Collections.sort(mList, new CollectListCompare());
-                    }
-                    saveData();
                     mHandler.sendEmptyMessage(0);
                 }
 
@@ -105,31 +97,28 @@ public class CollectListFragment extends Fragment implements FragmentInterface {
         }
     }
 
-    //保存数据到本地
-    private void saveData() {
-        SQLiteDatabase db = mHelper.getReadableDatabase();
-
-        for (int i = 0; i < mList.size(); i++) {
-            CollectEnity enity = mList.get(i);
-            db.execSQL("insert into Collect values ( null , ? , ? )", new Object[]{
-                    enity.getmUserId(),
-                    enity.getmMessageId()
-            });
-        }
-    }
-
     @Override
     public void initView() {
         mRecyclerView = (RecyclerView) rootView.findViewById(R.id.fragment_collect_recyclerView);
+        mRefreshLayout = (SwipeRefreshLayout) rootView.findViewById(R.id.fragment_collect_refreshLayout);
+        mRefreshLayout.setColorSchemeColors(Color.BLUE, Color.GREEN, Color.RED);
+        mRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                new Thread(mRunnable).start();
+            }
+        });
         new Thread(mRunnable).start();
     }
 
     @Override
     public void setView() {
-
         mAdapter = new CollectAdapter(mContext, mList);
         mRecyclerView.setLayoutManager(new LinearLayoutManager(mContext));
         mRecyclerView.setAdapter(mAdapter);
+        if (mRefreshLayout.isRefreshing()) {
+            mRefreshLayout.setRefreshing(false);
+        }
     }
 
     @Nullable
@@ -147,19 +136,9 @@ public class CollectListFragment extends Fragment implements FragmentInterface {
         initView();
     }
 
-    class CollectListCompare implements Comparator<CollectEnity> {
-        @Override
-        public int compare(CollectEnity lhs, CollectEnity rhs) {
-            String lhTime = lhs.getCreatedAt();
-            String rhTime = rhs.getCreatedAt();
-            return rhTime.compareTo(lhTime);
-        }
-
-        @Override
-        public boolean equals(Object object) {
-            return false;
-        }
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        BrioalConstan.getmDataUtil(mContext).saveCollects(mList);
     }
-
-
 }

@@ -10,15 +10,16 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.brioal.pocketcode.view.bgabanner.BGABanner;
 import com.brioal.pocketcode.R;
 import com.brioal.pocketcode.activity.WebViewActivity;
 import com.brioal.pocketcode.entiy.BannerModel;
 import com.brioal.pocketcode.entiy.ContentModel;
 import com.brioal.pocketcode.entiy.MyUser;
+import com.brioal.pocketcode.fragment.MainFragment;
 import com.brioal.pocketcode.interfaces.OnLoaderMoreListener;
-import com.brioal.pocketcode.util.PocketConstant;
+import com.brioal.pocketcode.util.NetWorkUtil;
 import com.brioal.pocketcode.view.CircleImageView;
+import com.brioal.pocketcode.view.bgabanner.BGABanner;
 import com.bumptech.glide.Glide;
 
 import java.util.ArrayList;
@@ -43,7 +44,6 @@ public class ContentAdapter extends RecyclerView.Adapter {
     private List<ContentModel> mList;
     private List<BannerModel> mBannerList;
     private OnLoaderMoreListener loaderMoreListener;
-    private int mNunCount = 0;
 
 
     public void setLoaderMoreListener(OnLoaderMoreListener loaderMoreListener) {
@@ -54,13 +54,8 @@ public class ContentAdapter extends RecyclerView.Adapter {
         this.mContext = mContext;
         this.mList = mList;
         this.mBannerList = mBannerList;
-        mNunCount = mList.size();
     }
 
-    public void setList(List<ContentModel> mList, List<BannerModel> mBannerList) {
-        this.mList = mList;
-        this.mBannerList = mBannerList;
-    }
 
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
@@ -153,7 +148,9 @@ public class ContentAdapter extends RecyclerView.Adapter {
                 }
             });
         } else if (holder instanceof LoadMoreViewHolder) {
-            loaderMoreListener.loadMore();
+            if (NetWorkUtil.isNetworkConnected(mContext)) {
+                loaderMoreListener.loadMore();
+            }
         }
 
     }
@@ -164,7 +161,7 @@ public class ContentAdapter extends RecyclerView.Adapter {
         if (mBannerList != null) { //banner存在,则多一个
             count += 1;
         }
-        if (mNunCount >= 7) {//还有数据,或者数据大小合适,应该显示底部信息
+        if (mList.size() >= 7) {//还有数据,或者数据大小合适,应该显示底部信息
             count += 1;
         }
         return count;
@@ -172,18 +169,22 @@ public class ContentAdapter extends RecyclerView.Adapter {
 
     @Override
     public int getItemViewType(int position) {
-        if (mBannerList!=null&&position == 0) {
+        if (mBannerList != null && position == 0) {
             return TYPE_BANNER;
         } else if (position == getItemCount() - 1) {
-            if (mNunCount % PocketConstant.MAIN_CONTENT_LIMIT == 0) {
-                return TYPE_LOAD_MORE; //加载更多布局
-            } else if(mNunCount>=7){
+            if (!NetWorkUtil.isNetworkConnected(mContext)) {
                 return TYPE_NO_MORE; //没有更多布局
-            }else {
-                return TYPE_CONTENT; //内容布局
+            } else {
+                if (mList.size() % MainFragment.LOAD_LIMIT == 0) {
+                    return TYPE_LOAD_MORE; //加载更多布局
+                } else if (mList.size() >= 7) {
+                    return TYPE_NO_MORE; //没有更多布局
+                } else {
+                    return TYPE_CONTENT; //内容布局
+                }
             }
         }
-         return TYPE_CONTENT;
+        return TYPE_CONTENT;
     }
 
     //内容布局
@@ -226,7 +227,7 @@ public class ContentAdapter extends RecyclerView.Adapter {
     }
 
     //加载更多布局
-    class LoadMoreViewHolder extends RecyclerView.ViewHolder {
+    private class LoadMoreViewHolder extends RecyclerView.ViewHolder {
 
         public LoadMoreViewHolder(View itemView) {
             super(itemView);
@@ -234,7 +235,7 @@ public class ContentAdapter extends RecyclerView.Adapter {
     }
 
     //没有更多布局
-    class NoMoreViewHolder extends RecyclerView.ViewHolder {
+    private class NoMoreViewHolder extends RecyclerView.ViewHolder {
 
         public NoMoreViewHolder(View itemView) {
             super(itemView);

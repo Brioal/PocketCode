@@ -15,11 +15,10 @@ import android.view.ViewGroup;
 
 import com.brioal.pocketcode.R;
 import com.brioal.pocketcode.entiy.MyUser;
-import com.brioal.pocketcode.util.LocalUserUtil;
+import com.brioal.pocketcode.util.BrioalConstan;
 import com.brioal.pocketcode.util.ToastUtils;
 import com.dd.CircularProgressButton;
 
-import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -27,7 +26,7 @@ import butterknife.ButterKnife;
 import cn.bmob.v3.BmobQuery;
 import cn.bmob.v3.BmobUser;
 import cn.bmob.v3.exception.BmobException;
-import cn.bmob.v3.listener.FindListener;
+import cn.bmob.v3.listener.GetListener;
 import cn.bmob.v3.listener.LogInListener;
 
 /**登录界面
@@ -129,15 +128,13 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
                     String objectId = mUser.getObjectId();
                     BmobQuery<MyUser> query = new BmobQuery<MyUser>();
                     query.addWhereEqualTo("objectId", objectId);
-                    query.findObjects(mContext, new FindListener<MyUser>() {
+                    query.getObject(mContext, objectId, new GetListener<MyUser>() {
                         @Override
-                        public void onSuccess(List<MyUser> list) {
-                            MyUser user1 = list.get(0);
-                            Log.i(TAG, "onSuccess: " + user1.getmHeadUrl(mContext));
+                        public void onSuccess(MyUser myUser) {
                             if (timer != null) {
                                 timer.cancel();
                             }
-                            LocalUserUtil.Save(mContext, list.get(0));
+                            BrioalConstan.getmLocalUser(mContext).save(myUser);
                             isComplete = true;
                             mBtnLogin.setProgress(100);
                             ToastUtils.showToast(mContext, "登录成功");
@@ -151,11 +148,8 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
                         }
 
                         @Override
-                        public void onError(int i, String s) {
-                            if (timer != null) {
-                                timer.cancel();
-                            }
-                            mBtnLogin.setProgress(-1);
+                        public void onFailure(int i, String s) {
+
                         }
                     });
 

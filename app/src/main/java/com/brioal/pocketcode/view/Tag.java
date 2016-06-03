@@ -2,6 +2,7 @@ package com.brioal.pocketcode.view;
 
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.RectF;
 import android.util.AttributeSet;
@@ -20,6 +21,7 @@ public class Tag extends TextView {
     private int mHeight;
     private int mStrikeWidth;
     private int mColor;
+    private boolean isChecked = false;
 
     public Tag(Context context) {
         this(context, null);
@@ -44,6 +46,21 @@ public class Tag extends TextView {
         mPaint.setStyle(Paint.Style.STROKE);
         mPaint.setStrokeWidth(mStrikeWidth);
 
+    }
+
+    public void setChecked(boolean checked) {
+        isChecked = checked;
+        if (checked) {
+            setTextColor(Color.WHITE);
+            setBackgroundColor(getContext().getResources().getColor(R.color.colorPrimary));
+        } else {
+            setTextColor(Color.BLACK);
+            setBackgroundColor(Color.WHITE);
+        }
+    }
+
+    public boolean isChecked() {
+        return isChecked;
     }
 
     @Override

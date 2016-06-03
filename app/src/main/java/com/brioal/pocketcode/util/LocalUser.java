@@ -8,9 +8,15 @@ import com.brioal.pocketcode.entiy.MyUser;
 /**
  * Created by Brioal on 2016/5/17.
  */
-public class LocalUserUtil {
+public class LocalUser {
+    private Context mContext;
+
+    public LocalUser(Context mContext) {
+        this.mContext = mContext;
+    }
+
     //保存用户信息
-    public static void Save(Context mContext, MyUser myUser) {
+    public void save(MyUser myUser) {
         SharedPreferences preferences = mContext.getSharedPreferences("PocketCode", Context.MODE_APPEND);
         SharedPreferences.Editor editor = preferences.edit();
         editor.putString("Id", myUser.getObjectId());
@@ -25,7 +31,7 @@ public class LocalUserUtil {
         editor.apply();
     }
 
-    public static MyUser Read(Context mContext) {
+    public MyUser getUser() {
         SharedPreferences preferences = mContext.getSharedPreferences("PocketCode", Context.MODE_APPEND);
         String mObjectId = preferences.getString("Id", "");
         String mUserName = preferences.getString("UserName", "");
@@ -51,7 +57,7 @@ public class LocalUserUtil {
         }
     }
 
-    public static void Delete(Context mContext) {
+    public void delete() {
         SharedPreferences preferences = mContext.getSharedPreferences("PocketCode", Context.MODE_APPEND);
         SharedPreferences.Editor editor = preferences.edit();
         editor.clear();

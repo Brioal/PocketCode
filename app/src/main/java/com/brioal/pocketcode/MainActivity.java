@@ -32,7 +32,7 @@ import android.widget.TextView;
 import com.brioal.pocketcode.activity.AboutActivity;
 import com.brioal.pocketcode.activity.AddContentActivity;
 import com.brioal.pocketcode.activity.AttentionActivity;
-import com.brioal.pocketcode.activity.FavoriteActivity;
+import com.brioal.pocketcode.activity.CollectActivity;
 import com.brioal.pocketcode.activity.LoginAndRegisterActivity;
 import com.brioal.pocketcode.activity.ShareListActivity;
 import com.brioal.pocketcode.activity.ThemeChooseActivity;
@@ -43,7 +43,7 @@ import com.brioal.pocketcode.entiy.MyUser;
 import com.brioal.pocketcode.fragment.ContentFragment;
 import com.brioal.pocketcode.fragment.MainFragment;
 import com.brioal.pocketcode.interfaces.ActivityInterFace;
-import com.brioal.pocketcode.util.LocalUserUtil;
+import com.brioal.pocketcode.util.BrioalConstan;
 import com.brioal.pocketcode.util.NetWorkUtil;
 import com.brioal.pocketcode.util.StatusBarUtils;
 import com.brioal.pocketcode.util.ThemeUtil;
@@ -130,7 +130,6 @@ public class MainActivity extends AppCompatActivity
     public void setView() {
         mAdapter = new ViewPagerAdapter(getSupportFragmentManager());
         mViewPager.setAdapter(mAdapter);
-        mViewPager.setOffscreenPageLimit(0);
         mTabLayout.setupWithViewPager(mViewPager);
         mFab.setOnClickListener(this);
     }
@@ -206,7 +205,7 @@ public class MainActivity extends AppCompatActivity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mContext = this;
-        mHelper = new DBHelper(this, "PocketCode.db3", null, 1);
+        mHelper = BrioalConstan.getDbHelper(mContext);
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
         initView();
@@ -236,13 +235,12 @@ public class MainActivity extends AppCompatActivity
         mName = (TextView) nav_headView.findViewById(R.id.nav_head_name);
         mDesc = (TextView) nav_headView.findViewById(R.id.nav_head_desc);
         navView.setNavigationItemSelectedListener(this);
-        mToolbar.setTitle(getResources().getString(R.string.app_name));
         initUserInfo();
 
     }
 
     public void initUserInfo() {
-        user = LocalUserUtil.Read(mContext);
+        user = BrioalConstan.getmLocalUser(mContext).getUser();
         if (user == null) { //未登陆
             mDesc.setVisibility(View.GONE);
             mName.setText("点击登录");
@@ -259,23 +257,7 @@ public class MainActivity extends AppCompatActivity
                 }
             });
         } else { //已登陆
-            if (NetWorkUtil.isNetworkConnected(mContext)) {
-                BmobQuery<MyUser> query = new BmobQuery<>();
-                query.getObject(mContext, user.getObjectId(), new GetListener<MyUser>() {
-                    @Override
-                    public void onSuccess(MyUser myUser) {
-                        Glide.with(mContext).load(myUser.getmHeadUrl(mContext)).into(mHead);
-                        mName.setText(myUser.getUsername());
-                        mDesc.setText(myUser.getmDesc() == null || user.getmDesc().isEmpty() ? "这个人很懒,什么都没留下~" : user.getmDesc());
-                        LocalUserUtil.Save(mContext,myUser);
-                    }
 
-                    @Override
-                    public void onFailure(int i, String s) {
-                        Log.i(TAG, "onFailure: 加载用户失败"+s);
-                    }
-                });
-            }
             Glide.with(mContext).load(user.getmHeadUrl(mContext)).into(mHead);
             mName.setText(user.getUsername());
             mDesc.setText(user.getmDesc() == null || user.getmDesc().isEmpty() ? "这个人很懒,什么都没留下~" : user.getmDesc());
@@ -297,6 +279,23 @@ public class MainActivity extends AppCompatActivity
                     startActivity(intent);
                 }
             });
+            if (NetWorkUtil.isNetworkConnected(mContext)) {
+                BmobQuery<MyUser> query = new BmobQuery<>();
+                query.getObject(mContext, user.getObjectId(), new GetListener<MyUser>() {
+                    @Override
+                    public void onSuccess(MyUser myUser) {
+                        Glide.with(mContext).load(myUser.getmHeadUrl(mContext)).into(mHead);
+                        mName.setText(myUser.getUsername());
+                        mDesc.setText(myUser.getmDesc() == null || myUser.getmDesc().isEmpty() ? "这个人很懒,什么都没留下~" : myUser.getmDesc());
+                        BrioalConstan.getmLocalUser(mContext).save(myUser);
+                    }
+
+                    @Override
+                    public void onFailure(int i, String s) {
+                        Log.i(TAG, "onFailure: 加载用户失败" + s);
+                    }
+                });
+            }
         }
     }
 
@@ -304,37 +303,7 @@ public class MainActivity extends AppCompatActivity
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == LOGIN_REQUESTION && resultCode == RESULT_OK) {
-            user = LocalUserUtil.Read(mContext);
-            if (user == null) { //未登陆
-                mDesc.setVisibility(View.GONE);
-                mName.setText("点击登录");
-                mName.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        startActivityForResult(new Intent(mContext, LoginAndRegisterActivity.class), LOGIN_REQUESTION);
-                    }
-                });
-            } else { //已登陆
-                Glide.with(mContext).load(user.getmHeadUrl(mContext)).into(mHead);
-                mName.setText(user.getUsername());
-                mDesc.setText(user.getmDesc() == null || user.getmDesc().isEmpty() ? "这个人很懒,什么都没留下~" : user.getmDesc());
-                mHead.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        Intent intent = new Intent(mContext, UserInfoActivity.class);
-                        intent.putExtra("User", user);
-                        startActivity(intent);
-                    }
-                });
-                mName.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        Intent intent = new Intent(mContext, UserInfoActivity.class);
-                        intent.putExtra("User", user);
-                        startActivity(intent);
-                    }
-                });
-            }
+            initUserInfo();
         }
     }
 
@@ -360,7 +329,7 @@ public class MainActivity extends AppCompatActivity
             if (user == null) {
                 startActivity(new Intent(mContext, LoginAndRegisterActivity.class));
             } else {
-                Intent intent = new Intent(mContext, FavoriteActivity.class);
+                Intent intent = new Intent(mContext, CollectActivity.class);
                 intent.putExtra("AccountId", user.getObjectId());
                 startActivityForResult(intent, FAVORITE_REQUESTCODE);
             }
@@ -396,7 +365,9 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
+
     private class ViewPagerAdapter extends FragmentStatePagerAdapter {
+
 
         public ViewPagerAdapter(FragmentManager fm) {
             super(fm);

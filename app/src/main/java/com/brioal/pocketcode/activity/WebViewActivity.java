@@ -1,6 +1,5 @@
 package com.brioal.pocketcode.activity;
 
-import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -17,26 +16,32 @@ import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.GeolocationPermissions;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import com.brioal.pocketcode.view.swipeback.app.SwipeBackActivity;
-import com.brioal.pocketcode.util.StatusBarUtils;
-import com.brioal.pocketcode.util.ToastUtils;
 import com.brioal.pocketcode.R;
+import com.brioal.pocketcode.entiy.AttentionEnity;
 import com.brioal.pocketcode.entiy.ContentModel;
+import com.brioal.pocketcode.entiy.MyUser;
 import com.brioal.pocketcode.interfaces.ActivityInterFace;
+import com.brioal.pocketcode.util.ClipboardUtil;
+import com.brioal.pocketcode.util.StatusBarUtils;
 import com.brioal.pocketcode.util.ThemeUtil;
+import com.brioal.pocketcode.util.ToastUtils;
+import com.brioal.pocketcode.view.CircleImageView;
+import com.brioal.pocketcode.view.swipeback.app.SwipeBackActivity;
+import com.bumptech.glide.Glide;
 
 import java.util.Timer;
 import java.util.TimerTask;
@@ -67,12 +72,20 @@ public class WebViewActivity extends SwipeBackActivity implements ActivityInterF
     LinearLayout mBottomLayout;
     @Bind(R.id.web_read)
     TextView mRead;
+    @Bind(R.id.web_author_head)
+    CircleImageView mHead;
+    @Bind(R.id.web_author_name)
+    TextView mName;
+    @Bind(R.id.web_author_btn_attention)
+    Button mBtnAttention;
+    @Bind(R.id.web_head_layout)
+    LinearLayout webHeadLayout;
 
     private ContentModel mModel;
-
     private String mContentId;
     private String mUrl;
     private String mTitle;
+    private String mUserId; //头像的链接
     Context mContext;
     private int Praise;
     private int Collect;
@@ -134,9 +147,30 @@ public class WebViewActivity extends SwipeBackActivity implements ActivityInterF
         mUrl = getIntent().getStringExtra("Url");
         mTitle = getIntent().getStringExtra("Title");
         mContentId = getIntent().getStringExtra("Id");
+        mUserId = getIntent().getStringExtra("UserId");
     }
 
     public void initView() {
+        if (mUserId == null) {
+            webHeadLayout.setVisibility(View.GONE);
+        } else {
+            BmobQuery<AttentionEnity> attentionQuery = new BmobQuery<>();
+            BmobQuery<MyUser> query = new BmobQuery<>();
+            query.getObject(mContext, mUserId, new GetListener<MyUser>() {
+                @Override
+                public void onSuccess(MyUser myUser) {
+                    Log.i(TAG, "onSuccess: 加载作者数据成功");
+                    Glide.with(mContext).load(myUser.getmHeadUrl(mContext)).into(mHead);
+                    mName.setText(myUser.getUsername());
+
+                }
+
+                @Override
+                public void onFailure(int i, String s) {
+                    Log.i(TAG, "onFailure: 加载作者数据失败" + s);
+                }
+            });
+        }
         mWebView.setWebViewClient(new WebViewClient() {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
@@ -183,6 +217,14 @@ public class WebViewActivity extends SwipeBackActivity implements ActivityInterF
                 }, 9000);
             }
         });
+        mCommit.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(mContext, CommentActivity.class);
+                intent.putExtra("MessageId", mContentId);
+                startActivity(intent);
+            }
+        });
         //显示收藏点赞的数量
         BmobQuery<ContentModel> query = new BmobQuery<>();
         query.getObject(this, mContentId, new GetListener<ContentModel>() {
@@ -200,7 +242,7 @@ public class WebViewActivity extends SwipeBackActivity implements ActivityInterF
                     mModel.update(mContext, new UpdateListener() {
                         @Override
                         public void onSuccess() {
-                            Log.i(TAG, "Read++");
+                            Log.i(TAG, "getUser++");
                             Read++;
                             mRead.setText(Read + "");
                         }
@@ -383,9 +425,8 @@ public class WebViewActivity extends SwipeBackActivity implements ActivityInterF
                 mWebView.scrollTo(0, 0);
                 break;
             case R.id.action_copy:
-                ClipboardManager c = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
-                c.setText(mUrl);//设置Clipboard 的内容
-                Toast.makeText(mContext, "复制成功", Toast.LENGTH_SHORT).show();
+                ClipboardUtil.setContent(mContext, mUrl);
+
                 break;
 
             case R.id.action_share:

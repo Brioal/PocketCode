@@ -3,10 +3,15 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="com.brioal.pocketcode">
 
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.CAMERA" />
 
     <application
         android:allowBackup="true"
@@ -39,7 +44,7 @@
             android:name=".activity.UserEditActivity"
             android:theme="@style/AppTheme.NoActionBar" />
         <activity
-            android:name=".activity.FavoriteActivity"
+            android:name=".activity.CollectActivity"
             android:theme="@style/AppTheme.NoActionBar" />
         <activity
             android:name=".activity.ShareListActivity"
@@ -58,7 +63,13 @@
             android:theme="@style/AppTheme.NoActionBar" />
         <activity
             android:name=".activity.AboutActivity"
-            android:theme="@style/AppTheme.NoActionBar"/>
+            android:theme="@style/AppTheme.NoActionBar" />
+        <activity
+            android:name=".activity.TagChooseActivity"
+            android:theme="@style/AppTheme.NoActionBar" />
+        <activity
+            android:name=".activity.CommentActivity"
+            android:theme="@style/AppTheme.NoActionBar" />
     </application>
 
 </manifest>

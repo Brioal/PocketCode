@@ -1,10 +1,18 @@
 package com.brioal.pocketcode.activity;
 
+import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
+import android.provider.MediaStore;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -18,19 +26,26 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.brioal.pocketcode.R;
+import com.brioal.pocketcode.entiy.MyUser;
+import com.brioal.pocketcode.interfaces.ActivityInterFace;
+import com.brioal.pocketcode.util.BrioalConstan;
+import com.brioal.pocketcode.util.ImageTools;
 import com.brioal.pocketcode.util.NetWorkUtil;
 import com.brioal.pocketcode.util.StatusBarUtils;
-import com.brioal.pocketcode.R;
-import com.brioal.pocketcode.interfaces.ActivityInterFace;
-import com.brioal.pocketcode.entiy.MyUser;
-import com.brioal.pocketcode.util.LocalUserUtil;
 import com.brioal.pocketcode.util.ThemeUtil;
 import com.brioal.pocketcode.view.CircleImageView;
 import com.bumptech.glide.Glide;
 
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
+
 import butterknife.Bind;
 import butterknife.ButterKnife;
+import cn.bmob.v3.datatype.BmobFile;
 import cn.bmob.v3.listener.UpdateListener;
+import cn.bmob.v3.listener.UploadFileListener;
 
 public class UserEditActivity extends AppCompatActivity implements View.OnClickListener, ActivityInterFace {
 
@@ -77,8 +92,13 @@ public class UserEditActivity extends AppCompatActivity implements View.OnClickL
     String Blog;
     String Github;
     String QQ;
+    private String headPath;
     private String TAG = "UserInfo";
     private AlertDialog.Builder builder;
+    private int GETPIC = 2;
+    private int CROP_PICTURE = 3;
+    private boolean headHasChange = false;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -166,7 +186,7 @@ public class UserEditActivity extends AppCompatActivity implements View.OnClickL
 
     @Override
     public void initData() {
-        user = LocalUserUtil.Read(mContext);
+        user = BrioalConstan.getmLocalUser(mContext).getUser();
     }
 
     public void initBar() {
@@ -252,7 +272,7 @@ public class UserEditActivity extends AppCompatActivity implements View.OnClickL
                 public void onSuccess() {
                     dialog.dismiss();
                     Log.i(TAG, "onSuccess: 更新成功");
-                    LocalUserUtil.Save(mContext, user);
+                    BrioalConstan.getmLocalUser(mContext).save(user);
                     finish();
                 }
 
@@ -284,6 +304,9 @@ public class UserEditActivity extends AppCompatActivity implements View.OnClickL
     }
 
     public boolean hasChanged() {
+        if (headHasChange) {
+            return true;
+        }
         if (!mName.getText().toString().equals(Name)) {
             return true;
         }
@@ -326,7 +349,7 @@ public class UserEditActivity extends AppCompatActivity implements View.OnClickL
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.user_edit_headLayout: //头像更改
-
+                showPicturePicker(this);
                 break;
             case R.id.user_edit_nameLayout: //昵称更改:
                 showEdit(mName, "修改昵称");
@@ -347,10 +370,133 @@ public class UserEditActivity extends AppCompatActivity implements View.OnClickL
                 showEdit(mQq, "修改QQ");
                 break;
             case R.id.user_edit_btn_out://退出登录:
-                LocalUserUtil.Delete(mContext);
+                BrioalConstan.getmLocalUser(mContext).delete();
                 setResult(RESULT_CANCELED);
                 finish();
                 break;
         }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (resultCode == RESULT_OK) {
+            if (requestCode == GETPIC) {
+                Bitmap photo = null;
+                Uri photoUri = data.getData();
+                if (photoUri != null) {
+                    photo = BitmapFactory.decodeFile(photoUri.getPath());
+                }
+                if (photo == null) {
+                    Bundle extra = data.getExtras();
+                    if (extra != null) {
+                        photo = (Bitmap) extra.get("data");
+                        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+                        photo.compress(Bitmap.CompressFormat.JPEG, 100, stream);
+                    }
+                }
+                mHead.setImageBitmap(photo);
+                File file = Environment.getExternalStorageDirectory();
+                try {
+                    headPath = file.getCanonicalFile().toString();
+                    ImageTools.savePhotoToSDCard(photo, headPath, "head");
+                    upLoadHead();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
+    //上传头像
+    public void upLoadHead() {
+        final BmobFile bmobFile = new BmobFile(new File(headPath + "/head.png"));
+        Log.i(TAG, "upLoadHead: " + headPath + "/head.png");
+        final ProgressDialog dialog = new ProgressDialog(mContext);
+        dialog.setCancelable(false);
+        dialog.setTitle("请稍等");
+        dialog.setMessage("正在上传头像，请稍等");
+        dialog.show();
+        bmobFile.uploadblock(mContext, new UploadFileListener() {
+            @Override
+            public void onSuccess() {
+                dialog.setMessage("头像上传成功,正在更新信息，请稍等");
+                user.setmHead(bmobFile);
+                user.update(mContext, user.getObjectId(), new UpdateListener() {
+                    @Override
+                    public void onSuccess() {
+                        Log.i(TAG, "onSuccess: 更新成功");
+                        user.setmHeadUrl(bmobFile.getFileUrl(mContext));
+                        dialog.dismiss();
+                        new File(headPath + "head.png").delete();
+                    }
+
+                    @Override
+                    public void onFailure(int i, String s) {
+                        AlertDialog.Builder builder = new AlertDialog.Builder(mContext);
+                        builder.setTitle("出错了").setMessage(s).setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                dialog.dismiss();
+                            }
+                        }).create().show();
+                        Log.i(TAG, "onFailure:更新失败 " + s);
+                    }
+                });
+            }
+
+            @Override
+            public void onProgress(Integer value) {
+                // 返回的上传进度（百分比）
+            }
+
+            @Override
+            public void onFailure(int code, String msg) {
+                Log.i(TAG, "onFailure: 上传头像失败" + msg);
+            }
+        });
+    }
+
+    //显示图片选择
+    public void showPicturePicker(final Activity activity) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(activity);
+        builder.setTitle("图片来源");
+        builder.setNegativeButton("取消", null);
+        builder.setItems(new String[]{"拍照", "相册"}, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                switch (which) {
+                    case 0:
+                        Uri imageUri = null;
+                        String fileName = null;
+                        Intent openCameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                        //删除上一次截图的临时文件
+                        SharedPreferences sharedPreferences = activity.getSharedPreferences("temp", Context.MODE_WORLD_WRITEABLE);
+                        ImageTools.deletePhotoAtPathAndName(Environment.getExternalStorageDirectory().getAbsolutePath(), sharedPreferences.getString("tempName", ""));
+
+                        //保存本次截图临时文件名字
+                        fileName = String.valueOf(System.currentTimeMillis()) + ".jpg";
+                        SharedPreferences.Editor editor = sharedPreferences.edit();
+                        editor.putString("tempName", fileName);
+                        editor.commit();
+
+                        imageUri = Uri.fromFile(new File(Environment.getExternalStorageDirectory(), fileName));
+                        //指定照片保存路径（SD卡），image.jpg为一个临时文件，每次拍照后这个图片都会被替换
+                        openCameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, imageUri);
+                        activity.startActivityForResult(openCameraIntent, GETPIC);
+                        break;
+
+                    case 1:
+                        Intent openAlbumIntent = new Intent(Intent.ACTION_GET_CONTENT);
+                        openAlbumIntent.setDataAndType(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, "image/*");
+                        activity.startActivityForResult(openAlbumIntent, GETPIC);
+                        break;
+
+                    default:
+                        break;
+                }
+            }
+        });
+        builder.create().show();
     }
 }

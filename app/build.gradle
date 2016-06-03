@@ -3,7 +3,9 @@ apply plugin: 'com.android.application'
 android {
     compileSdkVersion 23
     buildToolsVersion "23.0.3"
-
+    sourceSets {
+        main.jniLibs.srcDirs = ['libs']
+    }
     defaultConfig {
         applicationId "com.brioal.pocketcode"
         minSdkVersion 15
@@ -21,15 +23,18 @@ android {
 
 dependencies {
     compile fileTree(include: ['*.jar'], dir: 'libs')
-    compile files('libs/BmobSDK_V3.4.5_1111.jar')
     compile project(':circlrbutton')
     compile files('libs/butterknife-7.0.1.jar')
     compile files('libs/glide-3.5.1.jar')
+    compile files('libs/jsoup-1.9.1.jar')
+    compile files('libs/BmobSDK_V3.4.7_0527.jar')
+    compile files('libs/Bmob_Push_V0.9beta_20160520.jar')
+    compile files('libs/okhttp-3.2.0.jar')
+    compile files('libs/okio-1.7.0.jar')
     compile 'com.android.support:appcompat-v7:23.4.0'
     compile 'com.android.support:design:23.4.0'
     compile 'com.android.support:cardview-v7:23.4.0'
-    compile 'com.android.support.constraint:constraint-layout:1.0.0-alpha1'
     compile 'com.nineoldandroids:library:2.4.0'
+    compile 'com.android.support.constraint:constraint-layout:1.0.0-alpha2'
     testCompile 'junit:junit:4.12'
-    compile files('libs/jsoup-1.9.1.jar')
 }

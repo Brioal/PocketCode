@@ -1,13 +1,13 @@
 package com.brioal.pocketcode.fragment;
 
 import android.content.Context;
-import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -21,23 +21,22 @@ import com.brioal.pocketcode.database.DBHelper;
 import com.brioal.pocketcode.entiy.AttentionEnity;
 import com.brioal.pocketcode.entiy.MyUser;
 import com.brioal.pocketcode.interfaces.FragmentInterface;
+import com.brioal.pocketcode.interfaces.OnLoaderMoreListener;
 import com.brioal.pocketcode.util.BrioalConstan;
-import com.brioal.pocketcode.util.LocalUserUtil;
 import com.brioal.pocketcode.util.NetWorkUtil;
-import com.brioal.pocketcode.util.UserEnityCompare;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import cn.bmob.v3.BmobQuery;
 import cn.bmob.v3.listener.FindListener;
 
+import static com.brioal.pocketcode.fragment.MainFragment.LOAD_LIMIT;
+
 /**
  * Created by Brioal on 2016/5/31.
  */
 
-public class AttentionFragment extends Fragment implements FragmentInterface {
+public class AttentionFragment extends Fragment implements FragmentInterface, OnLoaderMoreListener {
     public static AttentionFragment mFragment;
     private View rootView;
     private Context mContext;
@@ -45,8 +44,9 @@ public class AttentionFragment extends Fragment implements FragmentInterface {
     private List<AttentionEnity> mList;
     private DBHelper mHelper;
     private RecyclerView mRecyclerView;
+    private SwipeRefreshLayout mRefreshLayout;
     private MyUser myUser;
-
+    private int mCount = 0;
     private Runnable mRunnable = new Runnable() {
         @Override
         public void run() {
@@ -57,7 +57,11 @@ public class AttentionFragment extends Fragment implements FragmentInterface {
         @Override
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
-            setView();
+            if (msg.what == 0) {
+                setView();
+            } else if (msg.what == 1) {
+                mAdapter.notifyItemRangeChanged(mCount, mList.size());
+            }
         }
     };
     private String TAG = "AttentionInfo";
@@ -71,25 +75,15 @@ public class AttentionFragment extends Fragment implements FragmentInterface {
 
     @Override
     public void initData() {
-        myUser = LocalUserUtil.Read(mContext);
-        if (mList == null) {
-            mList = new ArrayList<>();
-        } else {
-            mList.clear();
-        }
-        SQLiteDatabase db = mHelper.getReadableDatabase();
-        Cursor cursor = db.rawQuery("select * from Attention where mUserId = '"+myUser.getObjectId()+"'", null);
-        cursor.moveToFirst();
-        while (cursor.moveToNext()) {
-            AttentionEnity enity = new AttentionEnity(cursor.getString(1), cursor.getString(2));
-            mList.add(enity);
-        }
+        myUser = BrioalConstan.getmLocalUser(mContext).getUser();
+        mList = BrioalConstan.getmDataUtil(mContext).getAttentions(myUser.getObjectId());
         if (mList.size() > 0) {
             mHandler.sendEmptyMessage(0);
         }
         if (NetWorkUtil.isNetworkConnected(mContext)) {
             BmobQuery<AttentionEnity> query = new BmobQuery<>();
             query.setLimit(30);
+            query.order("-createdAt");
             query.addWhereEqualTo("mUserId", myUser.getObjectId());
             query.findObjects(mContext, new FindListener<AttentionEnity>() {
                 @Override
@@ -97,10 +91,6 @@ public class AttentionFragment extends Fragment implements FragmentInterface {
                     Log.i(TAG, "onSuccess: 获取关注数据成功");
                     mList = list;
                     if (mList.size() > 0) {
-                        if (mList.size() > 1) {
-                            Collections.sort(mList, new UserEnityCompare());
-                        }
-                        saveData();
                         mHandler.sendEmptyMessage(0);
                     }
                 }
@@ -113,31 +103,29 @@ public class AttentionFragment extends Fragment implements FragmentInterface {
         }
     }
 
-    //保存数据到本地
-    private void saveData() {
-        SQLiteDatabase db = mHelper.getReadableDatabase();
-        db.execSQL("delete from Attention where mAuthorId ='" + myUser.getObjectId() + "'"); //删除原有内容
-        for (int i = 0; i < mList.size(); i++) {
-            AttentionEnity enity = mList.get(i);
-            db.execSQL("insert into Attention values ( null , ? , ? )", new Object[]{
-                    enity.getmUserId(),
-                    enity.getmAuthorId()
-            });
-        }
-        db.close();
-    }
 
     @Override
     public void initView() {
         mRecyclerView = (RecyclerView) rootView.findViewById(R.id.fragment_attention_recyclerView);
+        mRefreshLayout = (SwipeRefreshLayout) rootView.findViewById(R.id.fragment_attention_refreshLayout);
+        mRefreshLayout.setColorSchemeColors(Color.BLUE, Color.GREEN, Color.RED);
+        mRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                new Thread(mRunnable).start();
+            }
+        });
     }
 
     @Override
     public void setView() {
-
         mAdapter = new AttentionAdapter(mContext, mList, AttentionAdapter.TYPE_ATTENTION);
+        mAdapter.setLoaderMoreListener(this);
         mRecyclerView.setLayoutManager(new LinearLayoutManager(mContext));
         mRecyclerView.setAdapter(mAdapter);
+        if (mRefreshLayout.isRefreshing()) {
+            mRefreshLayout.setRefreshing(false);
+        }
     }
 
     @Nullable
@@ -154,5 +142,36 @@ public class AttentionFragment extends Fragment implements FragmentInterface {
         super.onViewCreated(view, savedInstanceState);
         initView();
         new Thread(mRunnable).start();
+    }
+
+    @Override
+    public void loadMore() {
+        mCount = mList.size();
+        BmobQuery<AttentionEnity> queryContent = new BmobQuery<>();
+        queryContent.order("-createdAt");
+        queryContent.setSkip(mCount);
+        queryContent.setLimit(LOAD_LIMIT);
+        queryContent.findObjects(mContext, new FindListener<AttentionEnity>() {
+            @Override
+            public void onSuccess(List<AttentionEnity> list) {
+                Log.i(TAG, "onSuccess: 加载成功" + list.size() + "条内容");
+                for (int i = 0; i < list.size(); i++) {
+                    mList.add(list.get(i));
+                }
+                mHandler.sendEmptyMessage(1);
+            }
+
+            @Override
+            public void onError(int i, String s) {
+                Log.i(TAG, "onError: 加载失败" + s);
+            }
+        });
+    }
+
+    @Override
+    public void onDestroy() {
+        Log.i(TAG, "onDestroy: 保存数据到本地");
+        BrioalConstan.getmDataUtil(mContext).saveAttentions(mList,myUser.getObjectId());
+        super.onDestroy();
     }
 }

@@ -1,8 +1,6 @@
 package com.brioal.pocketcode.fragment;
 
 import android.content.Context;
-import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -21,12 +19,8 @@ import com.brioal.pocketcode.adapter.ShareListAdapter;
 import com.brioal.pocketcode.database.DBHelper;
 import com.brioal.pocketcode.entiy.ContentModel;
 import com.brioal.pocketcode.util.BrioalConstan;
-import com.brioal.pocketcode.util.ContentModelCompare;
-import com.brioal.pocketcode.util.LocalUserUtil;
 import com.brioal.pocketcode.util.NetWorkUtil;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import cn.bmob.v3.BmobQuery;
@@ -50,7 +44,6 @@ public class ShareListFragment extends Fragment {
         @Override
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
-            Collections.sort(mList, new ContentModelCompare());
             initView();
         }
     };
@@ -107,12 +100,16 @@ public class ShareListFragment extends Fragment {
 
     //获取数据
     private void initData() {
-        readLocalData();
+        mList = BrioalConstan.getmDataUtil(mContext).getShareLists(mAccountId);
+        if (mList.size() > 0) {
+            mHandler.sendEmptyMessage(0);
+        }
         if (NetWorkUtil.isNetworkConnected(mContext)) {
             BmobQuery<ContentModel> query = new BmobQuery<>();
             Log.i(TAG, "initData: " + mAccountId);
             query.addWhereEqualTo("mAuthorId", mAccountId);
             query.setLimit(100);
+            query.order("-updatedAt");
             query.findObjects(mContext, new FindListener<ContentModel>() {
                 @Override
                 public void onSuccess(List<ContentModel> list) {
@@ -129,27 +126,11 @@ public class ShareListFragment extends Fragment {
         }
     }
 
-    //读取本地自己分享的文章
-    private void readLocalData() {
-        if (mList == null) {
-            mList = new ArrayList<>();
-        } else {
-            mList.clear();
-        }
-        SQLiteDatabase db = mHelper.getReadableDatabase();
-        Cursor cursor = db.rawQuery("select * from Content where mAuthorId like '%" + mAccountId + "%'", null);
-        while (cursor.moveToNext()) {
-            ContentModel model = new ContentModel(cursor.getString(1), cursor.getString(2), cursor.getString(3), cursor.getString(4), cursor.getLong(5), cursor.getInt(6), cursor.getInt(7), cursor.getInt(8), cursor.getInt(9), cursor.getString(10), cursor.getString(11));
-            mList.add(model);
-        }
-        cursor.close();
-        mHandler.sendEmptyMessage(0);
-    }
 
 
     //获取出入的数据
     private void initId() {
-        mAccountId = LocalUserUtil.Read(mContext).getObjectId();
+        mAccountId = BrioalConstan.getmLocalUser(mContext).getUser().getObjectId();
     }
 
 

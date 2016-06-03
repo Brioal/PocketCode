@@ -1,12 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<android.support.v4.widget.SwipeRefreshLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/fragment_collect_refreshLayout"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical">
-    <android.support.v7.widget.RecyclerView
-        android:id="@+id/fragment_collect_recyclerView"
+    android:layout_height="match_parent">
+
+    <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-    </android.support.v7.widget.RecyclerView>
-</LinearLayout>
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:gravity="center"
+            android:text="暂无数据~"
+            android:textSize="20sp" />
+
+        <android.support.v7.widget.RecyclerView
+            android:id="@+id/fragment_collect_recyclerView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@color/colorWhite">
+
+        </android.support.v7.widget.RecyclerView>
+
+    </RelativeLayout>
+
+</android.support.v4.widget.SwipeRefreshLayout>

@@ -41,12 +41,6 @@ public class UserInfoActivity extends AppCompatActivity implements ActivityInter
     CircleImageView mHead;
     @Bind(R.id.user_info_desc)
     TextView mDesc;
-    @Bind(R.id.user_info_share)
-    TextView mShare;
-    @Bind(R.id.user_info_favorite)
-    TextView mFavorite;
-    @Bind(R.id.user_info_read)
-    TextView mRead;
     @Bind(R.id.user_info_edit)
     TextView mEdit;
     @Bind(R.id.user_info_headLayout)
@@ -68,6 +62,7 @@ public class UserInfoActivity extends AppCompatActivity implements ActivityInter
     private boolean isAdd = false;
     private boolean isDelete = false;
 
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -84,9 +79,6 @@ public class UserInfoActivity extends AppCompatActivity implements ActivityInter
         mName.setText(myUser.getUsername());
         mBlog.setText(myUser.getmFavorite());
         mDesc.setText(myUser.getmDesc());
-        mShare.setText("10篇");
-        mFavorite.setText("100次");
-        mRead.setText("100次");
         mEdit.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -127,8 +119,7 @@ public class UserInfoActivity extends AppCompatActivity implements ActivityInter
         });
         UserInfoViewPager vpAdapter = new UserInfoViewPager(getSupportFragmentManager(), mType);
         mViewpager.setAdapter(vpAdapter);
-        mViewpager.addOnPageChangeListener(new TabLayout.TabLayoutOnPageChangeListener(mTabLayout));
-        mTabLayout.setOnTabSelectedListener(new TabLayout.ViewPagerOnTabSelectedListener(mViewpager));
+        mTabLayout.setupWithViewPager(mViewpager);
     }
 
     @Override

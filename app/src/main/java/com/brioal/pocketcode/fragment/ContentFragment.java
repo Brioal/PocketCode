@@ -1,8 +1,6 @@
 package com.brioal.pocketcode.fragment;
 
 import android.content.Context;
-import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
@@ -17,20 +15,20 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.brioal.pocketcode.util.NetWorkUtil;
 import com.brioal.pocketcode.R;
 import com.brioal.pocketcode.adapter.ContentAdapter;
 import com.brioal.pocketcode.database.DBHelper;
 import com.brioal.pocketcode.entiy.ContentModel;
 import com.brioal.pocketcode.interfaces.OnLoaderMoreListener;
-import com.brioal.pocketcode.util.ContentModelCompare;
+import com.brioal.pocketcode.util.BrioalConstan;
+import com.brioal.pocketcode.util.NetWorkUtil;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import cn.bmob.v3.BmobQuery;
 import cn.bmob.v3.listener.FindListener;
+
+import static com.brioal.pocketcode.fragment.MainFragment.LOAD_LIMIT;
 
 /**
  * Created by Brioal on 2016/5/13.
@@ -40,6 +38,7 @@ public class ContentFragment extends Fragment implements OnLoaderMoreListener {
     private Context mContext;
     private DBHelper mHelper;
     private String mClassify;
+    private int mCount = 0;
     private RecyclerView mRecyclerView;
     private SwipeRefreshLayout mRefreshLayout;
     private List<ContentModel> mList;
@@ -48,7 +47,11 @@ public class ContentFragment extends Fragment implements OnLoaderMoreListener {
         @Override
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
-            setView();
+            if (msg.what == 0) {
+                setView();
+            } else if (msg.what == 1) {
+                mAdapter.notifyItemRangeChanged(mCount, mList.size());
+            }
         }
     };
     private Runnable mRunnable = new Runnable() {
@@ -60,10 +63,15 @@ public class ContentFragment extends Fragment implements OnLoaderMoreListener {
 
     //初始化数据
     private void initData() {
-        ReadData();
+        mList = BrioalConstan.getmDataUtil(mContext).getContentModels(mClassify);
+        if (mList.size() > 0) {
+            mHandler.sendEmptyMessage(0);
+        }
         if (NetWorkUtil.isNetworkConnected(mContext)) {
             BmobQuery<ContentModel> query = new BmobQuery<>();
             query.addWhereContains("mClassify", mClassify);
+            query.setLimit(LOAD_LIMIT);
+            query.order("-updatedAt");
             query.findObjects(mContext, new FindListener<ContentModel>() {
                 @Override
                 public void onSuccess(List<ContentModel> list) {
@@ -74,7 +82,6 @@ public class ContentFragment extends Fragment implements OnLoaderMoreListener {
                     for (int i = 0; i < list.size(); i++) {
                         mList.add(list.get(i));
                     }
-                    Collections.sort(mList, new ContentModelCompare());
                     mHandler.sendEmptyMessage(0);
                 }
 
@@ -84,26 +91,6 @@ public class ContentFragment extends Fragment implements OnLoaderMoreListener {
                 }
             });
         }
-    }
-
-
-    //读取本地数据
-    private void ReadData() {
-        if (mList == null) {
-            mList = new ArrayList<>();
-        } else {
-            mList.clear();
-        }
-        SQLiteDatabase db = mHelper.getReadableDatabase();
-        Cursor cursor = db.rawQuery("select * from Content where mClassify like '%" + mClassify + "%'", null);
-        cursor.moveToFirst();
-        while (cursor.moveToNext()) {
-            ContentModel model = new ContentModel(cursor.getString(1), cursor.getString(2), cursor.getString(3), cursor.getString(4), cursor.getLong(5), cursor.getInt(6), cursor.getInt(7), cursor.getInt(8), cursor.getInt(9), cursor.getString(10), cursor.getString(11));
-            mList.add(model);
-        }
-        Collections.sort(mList, new ContentModelCompare());
-        cursor.close();
-        mHandler.sendEmptyMessage(0);
     }
 
     private void setView() {
@@ -168,6 +155,24 @@ public class ContentFragment extends Fragment implements OnLoaderMoreListener {
 
     @Override
     public void loadMore() {
+        mCount = mList.size();
+        BmobQuery<ContentModel> queryContent = new BmobQuery<>();
+        queryContent.setSkip(mCount);
+        queryContent.setLimit(LOAD_LIMIT);
+        queryContent.findObjects(mContext, new FindListener<ContentModel>() {
+            @Override
+            public void onSuccess(List<ContentModel> list) {
+                Log.i(TAG, "onSuccess: 加载成功" + list.size() + "条内容");
+                for (int i = 0; i < list.size(); i++) {
+                    mList.add(list.get(i));
+                }
+                mHandler.sendEmptyMessage(1);
+            }
 
+            @Override
+            public void onError(int i, String s) {
+                Log.i(TAG, "onError: 加载失败" + s);
+            }
+        });
     }
 }

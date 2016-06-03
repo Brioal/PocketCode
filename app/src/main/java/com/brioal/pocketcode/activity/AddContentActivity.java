@@ -1,40 +1,40 @@
 package com.brioal.pocketcode.activity;
 
 import android.app.ProgressDialog;
-import android.content.ClipData;
-import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.design.widget.CoordinatorLayout;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
-import android.widget.ImageButton;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 
-import com.brioal.pocketcode.util.NetWorkUtil;
-import com.brioal.pocketcode.util.StatusBarUtils;
-import com.brioal.pocketcode.util.ToastUtils;
 import com.brioal.pocketcode.R;
 import com.brioal.pocketcode.database.DBHelper;
-import com.brioal.pocketcode.interfaces.ActivityInterFace;
 import com.brioal.pocketcode.entiy.ContentModel;
 import com.brioal.pocketcode.entiy.MyUser;
-import com.brioal.pocketcode.util.LocalUserUtil;
+import com.brioal.pocketcode.interfaces.ActivityInterFace;
+import com.brioal.pocketcode.util.BrioalConstan;
+import com.brioal.pocketcode.util.ClipboardUtil;
+import com.brioal.pocketcode.util.NetWorkUtil;
+import com.brioal.pocketcode.util.StatusBarUtils;
 import com.brioal.pocketcode.util.ThemeUtil;
+import com.brioal.pocketcode.util.ToastUtils;
 import com.brioal.pocketcode.view.Tag;
 
 import org.jsoup.Jsoup;
@@ -50,26 +50,24 @@ import cn.bmob.v3.listener.SaveListener;
 
 public class AddContentActivity extends AppCompatActivity implements View.OnClickListener, ActivityInterFace {
 
+
     @Bind(R.id.add_toolBar)
     Toolbar mToolBar;
-    @Bind(R.id.add_title)
-    EditText mTitle;
-    @Bind(R.id.add_desc)
-    EditText mDesc;
     @Bind(R.id.add_url)
-    EditText mUrl;
+    EditText mEtUrl;
+    @Bind(R.id.add_title)
+    EditText mEtTitle;
+    @Bind(R.id.add_desc)
+    EditText mEtDesc;
     @Bind(R.id.add_tag)
-    EditText mTag;
-    @Bind(R.id.add_addTag)
-    ImageButton mBtnAddTag;
+    TextView addTag;
     @Bind(R.id.add_tag_layout)
-    LinearLayout mTagLayout;
-    @Bind(R.id.add_tag_used)
-    LinearLayout mTagUsed;
-
+    LinearLayout addTagLayout;
+    @Bind(R.id.activity_add_content)
+    CoordinatorLayout activityAddContent;
     private Context mContext;
     private MyUser user;
-    private String mTags = "";
+    private List<String> mTags;
     private String title;
     private String desc;
     private String url;
@@ -122,7 +120,7 @@ public class AddContentActivity extends AppCompatActivity implements View.OnClic
                 dialog.dismiss();
             }
         });
-        mUrl.addTextChangedListener(new TextWatcher() {
+        mEtUrl.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
 
@@ -149,48 +147,67 @@ public class AddContentActivity extends AppCompatActivity implements View.OnClic
         });
     }
 
-    @Override
-    public void setView() {
-        for (int i = 0; i < mLocalTags.size(); i++) {
-            final String text = mLocalTags.get(i);
-            final Tag tag = new Tag(mContext);
-            tag.setText(text);
+
+    public void cleadTags() {
+        addTagLayout.removeAllViews();
+        mTags.clear();
+    }
+
+    public void addTags(List<String> list, boolean isChecked) {
+        for (int i = 0; i < list.size(); i++) {
+            final String text = list.get(i);
+            View rootView = LayoutInflater.from(mContext).inflate(R.layout.item_tag, addTagLayout, false);
+
+            addTagLayout.addView(rootView);
+            final Tag tag = (Tag) rootView.findViewById(R.id.item_tag);
+            tag.setText(list.get(i));
+            tag.setChecked(isChecked);
+            if (isChecked) {
+                mTags.add(text);
+            }
             tag.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    if (!mTags.contains(text)) {
-                        addTag(text);
+                    if (tag.isChecked()) {
+                        tag.setChecked(false);
+                        if (mTags.contains(text)) {
+                            mTags.remove(text);
+                        }
+                    } else {
+                        tag.setChecked(true);
+                        if (!mTags.contains(text)) {
+                            mTags.add(text);
+                        }
                     }
                 }
             });
+
         }
     }
 
+    @Override
+    public void setView() {
+        addTags(mLocalTags, false);
+    }
+
     private void initActions() {
-        mBtnAddTag.setOnClickListener(this);
+        addTag.setOnClickListener(this);
     }
 
     //获取当前属性
     public void initData() {
-        if (mLocalTags == null) {
-            mLocalTags = new ArrayList<>();
+        mLocalTags = BrioalConstan.getmDataUtil(mContext).getLocalTag();
+        if (mTags == null) {
+            mTags = new ArrayList<>();
         } else {
-            mLocalTags.clear();
+            mTags.clear();
         }
-        user = LocalUserUtil.Read(this);
-        SQLiteDatabase db = mHelper.getReadableDatabase();
-        Cursor cursor = db.rawQuery("select * from Tag", null);
-        cursor.moveToFirst();
-        while (cursor.moveToNext()) {
-            mLocalTags.add(cursor.getString(1));
-        }
-        cursor.close();
     }
 
 
     //添加文章
     private void addContent() {
-        user = LocalUserUtil.Read(mContext);
+        user = BrioalConstan.getmLocalUser(mContext).getUser();
         if (user == null) {
             ToastUtils.showToast(mContext, "未登陆,请登陆后再操作~");
             startActivity(new Intent(mContext, LoginAndRegisterActivity.class));
@@ -200,11 +217,20 @@ public class AddContentActivity extends AppCompatActivity implements View.OnClic
             dialog.setMessage("正在发表,请稍等....");
             dialog.setCancelable(false);
             dialog.show();
-            title = mTitle.getText().toString();
-            desc = mDesc.getText().toString();
-            url = mUrl.getText().toString();
+            title = mEtTitle.getText().toString();
+            desc = mEtDesc.getText().toString();
+            url = mEtUrl.getText().toString();
             //用户自己输入标题
-            ContentModel model = new ContentModel(user.getObjectId(), title, desc, mTags, System.currentTimeMillis(), 0, 0, 0, 0, url, user.getmHeadUrl(mContext));
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < mTags.size(); i++) {
+                if (i == mTags.size() - 1) {
+                    sb.append(mTags.get(i));
+                } else {
+                    sb.append(mTags.get(i) + ",");
+                }
+            }
+            String tag = sb.toString();
+            ContentModel model = new ContentModel(user.getObjectId(), title, desc, tag, System.currentTimeMillis(), 0, 0, 0, 0, url, user.getmHeadUrl(mContext));
             model.save(mContext, new SaveListener() {
                 @Override
                 public void onSuccess() {
@@ -226,36 +252,10 @@ public class AddContentActivity extends AppCompatActivity implements View.OnClic
 
 
     //添加标签
-    private void addTag(String text) {
-        String tagText = null;
-        if (text == null) {
-            tagText = mTag.getText().toString();
-        } else {
-            tagText = text;
-        }
-        if (tagText.isEmpty()) {
-            mTag.setError("标签不能为空");
-        } else {
-            if (mTags.isEmpty()) {
-                mTags += tagText;
-            } else {
-                mTags += "," + tagText;
-            }
-            Tag tag = new Tag(mContext);
-            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-            tag.setTextSize(16);
-            tag.setText(tagText);
-            tag.setPadding(10, 10, 10, 10);
-            params.setMargins(20, 10, 10, 10);
-            mTagLayout.addView(tag, params);
-            mTag.setText("");
-        }
-
-    }
 
     //判断是否有内容，有就保存
     public void judgeContent() {
-        if (mUrl.getText().toString().isEmpty()) {
+        if (mEtUrl.getText().toString().isEmpty()) {
             finish();
         } else {
             AlertDialog.Builder builder = new AlertDialog.Builder(mContext);
@@ -277,19 +277,15 @@ public class AddContentActivity extends AppCompatActivity implements View.OnClic
 
     protected void onResume() {
         super.onResume();
-        final ClipboardManager cm = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
-        ClipData data = cm.getPrimaryClip();
-        if (data != null) {
-            ClipData.Item item = data.getItemAt(0);
-            String content = item.getText().toString();
-            System.out.println(item.getText().toString());
+        String content = ClipboardUtil.getContent(mContext);
+        if (content != null) {
             SharedPreferences preferences = getSharedPreferences("Url", Context.MODE_PRIVATE);
             SharedPreferences.Editor editor = preferences.edit();
             String lastContent = "";
             if (content.contains("http") || content.contains("www")) {
                 lastContent = preferences.getString("lastContent", "");
                 if (!lastContent.equals(content)) {
-                    mUrl.setText(content);
+                    mEtUrl.setText(content);
                     MessageAsy asy = new MessageAsy();
                     asy.execute(content);
                     editor.putString("lastContent", content);
@@ -313,11 +309,11 @@ public class AddContentActivity extends AppCompatActivity implements View.OnClic
                 judgeContent();
                 break;
             case R.id.action_add:
-                if (!mUrl.getText().toString().isEmpty()) {
+                if (!mEtUrl.getText().toString().isEmpty()) {
                     addContent();
                 } else {
-                    mUrl.setError("链接不能为空");
-                    mUrl.requestFocus();
+                    mEtUrl.setError("链接不能为空");
+                    mEtUrl.requestFocus();
                 }
                 break;
         }
@@ -327,9 +323,20 @@ public class AddContentActivity extends AppCompatActivity implements View.OnClic
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
-            case R.id.add_addTag:
-                addTag(null);
+            case R.id.add_tag:
+                cleadTags();
+                startActivityForResult(new Intent(mContext, TagChooseActivity.class), 0);
                 break;
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (resultCode == RESULT_OK && requestCode == 0) {
+            Log.i(TAG, "onActivityResult: ");
+            List<String> tags = (List<String>) data.getSerializableExtra("Tags");
+            addTags(tags, true);
         }
     }
 
@@ -342,9 +349,8 @@ public class AddContentActivity extends AppCompatActivity implements View.OnClic
     public void saveTags() {
         SQLiteDatabase db = mHelper.getReadableDatabase();
         db.execSQL("delete from Tag where _id > 0");
-        String[] texts = mTags.split(",");
-        for (int i = 0; i < texts.length; i++) {
-            db.execSQL("insert into Tag values ( null , ? )", new Object[]{texts[i]});
+        for (int i = 0; i < mTags.size(); i++) {
+            db.execSQL("insert into Tag values ( null , ? )", new Object[]{mTags.get(i)});
         }
         db.close();
     }
@@ -368,7 +374,7 @@ public class AddContentActivity extends AppCompatActivity implements View.OnClic
         public void onPostExecute(String params) {
             Log.i(TAG, "onPostExecute: " + params);
             title = params;
-            mTitle.setText(title);
+            mEtTitle.setText(title);
             dialog.dismiss();
         }
     }

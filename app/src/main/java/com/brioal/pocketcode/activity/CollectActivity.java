@@ -3,7 +3,6 @@ package com.brioal.pocketcode.activity;
 import android.content.Context;
 import android.graphics.Color;
 import android.os.Bundle;
-import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -23,12 +22,11 @@ import butterknife.ButterKnife;
  * 在收藏类中查询文章的Id
  * 在文章中查询数据
  */
-public class FavoriteActivity extends SwipeBackActivity implements ActivityInterFace {
-    @Bind(R.id.favorite_toolBar)
-    Toolbar mToolBar;
-    @Bind(R.id.favorite_swipeLayout)
-    SwipeRefreshLayout mSwipeLayout;
+public class CollectActivity extends SwipeBackActivity implements ActivityInterFace {
 
+
+    @Bind(R.id.toolBar)
+    Toolbar mToolBar;
     private Context mContext;
     private String TAG = "FavoriteInfo";
 
@@ -42,7 +40,7 @@ public class FavoriteActivity extends SwipeBackActivity implements ActivityInter
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mContext = this;
-        setContentView(R.layout.activity_favorate);
+        setContentView(R.layout.activity_collect);
         ButterKnife.bind(this);
         initBar();
         initView();
@@ -51,6 +49,7 @@ public class FavoriteActivity extends SwipeBackActivity implements ActivityInter
 
 
     public void initBar() {
+        mToolBar.setTitle("我的收藏");
         setSupportActionBar(mToolBar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
     }
@@ -70,13 +69,6 @@ public class FavoriteActivity extends SwipeBackActivity implements ActivityInter
     @Override
     public void initView() {
         getSupportFragmentManager().beginTransaction().add(R.id.collect_container, new CollectListFragment()).commit();
-        mSwipeLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
-            @Override
-            public void onRefresh() {
-                // TODO: 2016/5/31 回调刷新fragment
-            }
-        });
-
     }
 
     @Override

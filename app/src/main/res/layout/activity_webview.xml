@@ -6,25 +6,76 @@
     android:layout_height="match_parent"
     android:fitsSystemWindows="true">
 
-    <android.support.v7.widget.Toolbar
-        android:id="@+id/web_toolbar"
+    <android.support.design.widget.AppBarLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@color/colorPrimary"
-        android:drawingCacheQuality="high"
-        app:theme="@style/WhiteToolBar"
-        app:titleTextColor="@color/colorWhite" />
+        android:layout_height="wrap_content">
+
+        <android.support.v7.widget.Toolbar
+            android:id="@+id/web_toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/colorPrimary"
+            android:drawingCacheQuality="high"
+            app:layout_scrollFlags="scroll|enterAlways|snap"
+            app:theme="@style/WhiteToolBar"
+            app:titleTextColor="@color/colorWhite" />
+
+    </android.support.design.widget.AppBarLayout>
 
     <android.support.v4.widget.SwipeRefreshLayout
         android:id="@+id/web_refresh"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginTop="?attr/actionBarSize">
-
-        <WebView
-            android:id="@+id/web_webView"
+        android:layout_marginTop="?attr/actionBarSize"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+        <LinearLayout
+            android:orientation="vertical"
             android:layout_width="match_parent"
-            android:layout_height="match_parent" />
+            android:layout_height="match_parent">
+            <LinearLayout
+                android:id="@+id/web_head_layout"
+                android:layout_width="match_parent"
+                android:layout_height="45dp"
+                android:background="@color/colorWhite"
+                app:layout_scrollFlags="scroll|enterAlways|snap">
+
+                <com.brioal.pocketcode.view.CircleImageView
+                    android:id="@+id/web_author_head"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_gravity="center_vertical"
+                    android:layout_marginLeft="10dp"
+                    android:src="@mipmap/ic_default_head" />
+
+                <TextView
+                    android:id="@+id/web_author_name"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:layout_marginLeft="10dp"
+                    android:layout_weight="1"
+                    android:gravity="center_vertical"
+                    android:text="名称"
+                    android:textColor="@color/colorBlack"
+                    android:textSize="18sp" />
+
+                <Button
+                    android:id="@+id/web_author_btn_attention"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical|right"
+                    android:layout_marginBottom="5dp"
+                    android:layout_marginRight="10dp"
+                    android:layout_marginTop="5dp"
+                    android:background="@drawable/add_attention_bg"
+                    android:text="关注"
+                    android:textColor="@color/colorWhite" />
+            </LinearLayout>
+
+            <WebView
+                android:id="@+id/web_webView"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+        </LinearLayout>
 
     </android.support.v4.widget.SwipeRefreshLayout>
 
@@ -35,7 +86,8 @@
         android:layout_gravity="bottom"
         android:background="@color/colorWhite"
         android:orientation="horizontal"
-        android:paddingTop="10dp">
+        android:paddingTop="10dp"
+        app:layout_scrollFlags="scroll|enterAlways|snap">
 
         <EditText
             android:id="@+id/web_commit"

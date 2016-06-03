@@ -28,6 +28,10 @@ public class MyUser extends BmobUser {
         return mHeadUrl == null ? mHead.getFileUrl(mContext) : mHeadUrl;
     }
 
+    public void setmHead(BmobFile mHead) {
+        this.mHead = mHead;
+    }
+
     public int getmShare() {
         return mShare;
     }
