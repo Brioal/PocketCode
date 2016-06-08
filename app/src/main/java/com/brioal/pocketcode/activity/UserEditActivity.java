@@ -14,7 +14,6 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -27,13 +26,13 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.brioal.pocketcode.R;
-import com.brioal.pocketcode.entiy.MyUser;
-import com.brioal.pocketcode.interfaces.ActivityInterFace;
-import com.brioal.pocketcode.util.BrioalConstan;
+import com.brioal.pocketcode.base.BaseActivity;
+import com.brioal.pocketcode.entiy.User;
+import com.brioal.pocketcode.util.Constants;
 import com.brioal.pocketcode.util.ImageTools;
-import com.brioal.pocketcode.util.NetWorkUtil;
 import com.brioal.pocketcode.util.StatusBarUtils;
 import com.brioal.pocketcode.util.ThemeUtil;
+import com.brioal.pocketcode.util.ToastUtils;
 import com.brioal.pocketcode.view.CircleImageView;
 import com.bumptech.glide.Glide;
 
@@ -47,7 +46,11 @@ import cn.bmob.v3.datatype.BmobFile;
 import cn.bmob.v3.listener.UpdateListener;
 import cn.bmob.v3.listener.UploadFileListener;
 
-public class UserEditActivity extends AppCompatActivity implements View.OnClickListener, ActivityInterFace {
+/**
+ * 用户信息设置类
+ * 传入MyUser
+ */
+public class UserEditActivity extends BaseActivity implements View.OnClickListener {
 
 
     @Bind(R.id.user_edit_toolbar)
@@ -83,8 +86,7 @@ public class UserEditActivity extends AppCompatActivity implements View.OnClickL
     @Bind(R.id.user_edit_btn_out)
     Button mBtnOut;
 
-    private MyUser user;
-    private Context mContext;
+    private User user;
     String HeadUrl;
     String Name;
     String Desc;
@@ -96,20 +98,9 @@ public class UserEditActivity extends AppCompatActivity implements View.OnClickL
     private String TAG = "UserInfo";
     private AlertDialog.Builder builder;
     private int GETPIC = 2;
-    private int CROP_PICTURE = 3;
     private boolean headHasChange = false;
+    private boolean hasChenged = false;
 
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_user_edit);
-        ButterKnife.bind(this);
-        mContext = this;
-        initData();
-        initView();
-        initActions();
-    }
 
     private void initActions() {
         mHeadLayout.setOnClickListener(this);
@@ -122,7 +113,7 @@ public class UserEditActivity extends AppCompatActivity implements View.OnClickL
         mBtnOut.setOnClickListener(this);
     }
 
-    public void showEdit(final TextView mTv, String title) {
+    public void showEdit(final TextView mTv, String title, final String key) {
         View edit_layout;
         builder = new AlertDialog.Builder(mContext);
         edit_layout = LayoutInflater.from(mContext).inflate(R.layout.dialog_edit, null, false);
@@ -132,7 +123,26 @@ public class UserEditActivity extends AppCompatActivity implements View.OnClickL
         builder.setPositiveButton("确定", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
+                hasChenged = true;
                 mTv.setText(mEt.getText().toString());
+                User myUser = new User();
+
+                myUser.setValue(key, mTv.getText().toString());
+                user.setValue(key, mTv.getText().toString());
+                myUser.update(mContext, user.getObjectId(), new UpdateListener() {
+                    @Override
+                    public void onSuccess() {
+                        Log.i(TAG, "onSuccess: 保存数据成功" + key);
+                        ToastUtils.showToast(mContext, "保存数据成功");
+                        Constants.getmDataUtil(mContext).saveUserLocal(user);
+                    }
+
+                    @Override
+                    public void onFailure(int i, String s) {
+                        Log.i(TAG, "onFailure: 保存数据失败" + s);
+                        showNoticeDialog("错误", s);
+                    }
+                });
                 dialog.dismiss();
             }
         }).setNegativeButton("取消", new DialogInterface.OnClickListener() {
@@ -146,7 +156,11 @@ public class UserEditActivity extends AppCompatActivity implements View.OnClickL
         builder.create().show();
     }
 
-    public void initView() {
+    @Override
+    public void initView(Bundle savedInstanceState) {
+        super.initView(savedInstanceState);
+        setContentView(R.layout.activity_user_edit);
+        ButterKnife.bind(this);
         HeadUrl = user.getmHeadUrl(mContext);
         Name = user.getUsername();
         Desc = user.getmDesc();
@@ -157,6 +171,8 @@ public class UserEditActivity extends AppCompatActivity implements View.OnClickL
 
         if (HeadUrl != null) {
             Glide.with(mContext).load(HeadUrl).into(mHead);
+        } else {
+            mHead.setImageResource(R.mipmap.ic_default_head);
         }
         if (Name != null) {
             mName.setText(Name);
@@ -177,6 +193,7 @@ public class UserEditActivity extends AppCompatActivity implements View.OnClickL
             mQq.setText(QQ);
         }
 
+        initActions();
     }
 
     @Override
@@ -186,7 +203,13 @@ public class UserEditActivity extends AppCompatActivity implements View.OnClickL
 
     @Override
     public void initData() {
-        user = BrioalConstan.getmLocalUser(mContext).getUser();
+        user = (User) getIntent().getSerializableExtra("User");
+    }
+
+    @Override
+    public void loadDataNet() {
+        super.loadDataNet();
+        mHandler.sendEmptyMessage(0);
     }
 
     public void initBar() {
@@ -219,131 +242,58 @@ public class UserEditActivity extends AppCompatActivity implements View.OnClickL
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case android.R.id.home:
-                if (hasChanged()) { //改变
-                    AlertDialog.Builder builder = new AlertDialog.Builder(mContext);
-                    builder.setTitle("提示").setMessage("内容已发生改变,是否保存").setPositiveButton("保存", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            saveData();
-                        }
-                    }).setNegativeButton("不保存", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            setResult(10);
-                            finish();
-                        }
-                    });
-                    builder.create().show();
-                } else { //未发生改变
-                    setResult(10);
-                    this.finish();
-                }
-                break;
-            case R.id.action_save:
-                if (hasChanged()) {
-                    saveData();
+                if (hasChenged) {
+                    setResult(RESULT_OK);
                 } else {
-                    setResult(10);
+                    setResult(3);
                 }
+                finish();
                 break;
         }
         return super.onOptionsItemSelected(item);
     }
 
-    //保存用户数据
-    private void saveData() {
-        if (NetWorkUtil.isNetworkConnected(mContext)) {
-            final ProgressDialog dialog = new ProgressDialog(mContext);
-            dialog.setCancelable(false);
-            dialog.setTitle("请稍等");
-            dialog.setMessage("正在保存个人信息，请稍等");
-            dialog.show();
-            if (!mName.getText().toString().equals(Name)) {
-                user.setUsername(mName.getText().toString());
-            }
-            user.setmDesc(mDesc.getText().toString());
-            user.setmBlog(mBlog.getText().toString());
-            user.setmGitHub(mGithub.getText().toString());
-            user.setmFavorite(mFavorite.getText().toString());
-            user.setmQQ(mQq.getText().toString());
-            // TODO: 2016/5/18 数据更新
-            user.update(mContext, user.getObjectId(), new UpdateListener() {
-                @Override
-                public void onSuccess() {
-                    dialog.dismiss();
-                    Log.i(TAG, "onSuccess: 更新成功");
-                    BrioalConstan.getmLocalUser(mContext).save(user);
-                    finish();
-                }
+    //显示加载Dialog
+    public void showProgressDialog(String title, String message, boolean isValue) {
 
-                @Override
-                public void onFailure(int i, String s) {
-                    dialog.dismiss();
-                    AlertDialog.Builder builder = new AlertDialog.Builder(mContext);
-                    builder.setTitle("出错了").setMessage(s).setPositiveButton("确定", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            dialog.dismiss();
-                        }
-                    }).create().show();
-                    Log.i(TAG, "onFailure:更新失败 " + s);
-                }
-            });
+        mProgressDialog = new ProgressDialog(mContext);
+        if (isValue) {
+            mProgressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
         } else {
-            AlertDialog.Builder builder = new AlertDialog.Builder(mContext);
-            builder.setTitle("错误").setMessage("网络不可用，请灯网络可用时再试");
-            builder.setPositiveButton("确定", new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    dialog.dismiss();
-                }
-            }).create().show();
+            mProgressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
         }
-
-
+        mProgressDialog.setTitle(title);
+        mProgressDialog.setMessage(message);
+        mProgressDialog.setCancelable(false);
+        mProgressDialog.show();
     }
 
-    public boolean hasChanged() {
-        if (headHasChange) {
-            return true;
-        }
-        if (!mName.getText().toString().equals(Name)) {
-            return true;
-        }
-        if (!mDesc.getText().toString().equals(Desc)) {
-            return true;
-        }
-        if (!mFavorite.getText().toString().equals(Interst)) {
-            return true;
-        }
-        if (!mBlog.getText().toString().equals(Blog)) {
-            return true;
-        }
-        if (!mGithub.getText().toString().equals(Github)) {
-            return true;
-        }
-        if (!mQq.getText().toString().equals(QQ)) {
-            return true;
-        }
-
-        return false;
+    //显示错误Dialog
+    public void showNoticeDialog(String title, String message) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(mContext);
+        mNoticeDialog = builder.setTitle(title).setMessage(message).setPositiveButton("确认", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+            }
+        }).create();
+        mNoticeDialog.show();
     }
+
+    private AlertDialog mNoticeDialog;
+    private ProgressDialog mProgressDialog;
+
 
     @Override
     protected void onPause() {
         super.onPause();
-        upDateUser();
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        upDateUser();
     }
 
-    public void upDateUser() {
-
-    }
 
     @Override
     public void onClick(View v) {
@@ -352,25 +302,25 @@ public class UserEditActivity extends AppCompatActivity implements View.OnClickL
                 showPicturePicker(this);
                 break;
             case R.id.user_edit_nameLayout: //昵称更改:
-                showEdit(mName, "修改昵称");
+                showEdit(mName, "修改昵称", "userName");
                 break;
             case R.id.user_edit_descLayout: //简介更改:
-                showEdit(mDesc, "修改简介");
+                showEdit(mDesc, "修改简介", "mDesc");
                 break;
             case R.id.user_edit_favoriteLayout: //兴趣更改:
-                showEdit(mFavorite, "修改擅长领域");
+                showEdit(mFavorite, "修改擅长领域", "mFavorite");
                 break;
             case R.id.user_edit_blogLayout://博客修改
-                showEdit(mBlog, "修改博客地址");
+                showEdit(mBlog, "修改博客地址", "mBlog");
                 break;
             case R.id.user_edit_GitHubLayout://修改github地址
-                showEdit(mGithub, "修改博客地址");
+                showEdit(mGithub, "修改博客地址", "mGithub");
                 break;
             case R.id.user_edit_qqLayout://修改qq
-                showEdit(mQq, "修改QQ");
+                showEdit(mQq, "修改QQ", "mQQ");
                 break;
             case R.id.user_edit_btn_out://退出登录:
-                BrioalConstan.getmLocalUser(mContext).delete();
+                Constants.getmDataUtil(mContext).deleteUserLocal();
                 setResult(RESULT_CANCELED);
                 finish();
                 break;
@@ -412,34 +362,35 @@ public class UserEditActivity extends AppCompatActivity implements View.OnClickL
     public void upLoadHead() {
         final BmobFile bmobFile = new BmobFile(new File(headPath + "/head.png"));
         Log.i(TAG, "upLoadHead: " + headPath + "/head.png");
-        final ProgressDialog dialog = new ProgressDialog(mContext);
-        dialog.setCancelable(false);
-        dialog.setTitle("请稍等");
-        dialog.setMessage("正在上传头像，请稍等");
-        dialog.show();
+        showProgressDialog("请稍等", "正在上传头像", true);
         bmobFile.uploadblock(mContext, new UploadFileListener() {
             @Override
             public void onSuccess() {
-                dialog.setMessage("头像上传成功,正在更新信息，请稍等");
-                user.setmHead(bmobFile);
-                user.update(mContext, user.getObjectId(), new UpdateListener() {
+                mProgressDialog.setMessage("头像上传成功,正在更新信息，请稍等");
+                User myUser = new User();
+                myUser.setmHead(bmobFile);
+                myUser.update(mContext, user.getObjectId(), new UpdateListener() {
                     @Override
                     public void onSuccess() {
+                        if (mProgressDialog.isShowing()) {
+                            mProgressDialog.dismiss();
+                        }
                         Log.i(TAG, "onSuccess: 更新成功");
+                        ToastUtils.showToast(mContext, "头像更新成功");
                         user.setmHeadUrl(bmobFile.getFileUrl(mContext));
-                        dialog.dismiss();
+                        Constants.getmDataUtil(mContext).saveUserLocal(user);
+                        if (mProgressDialog.isShowing()) {
+                            mProgressDialog.dismiss();
+                        }
                         new File(headPath + "head.png").delete();
                     }
 
                     @Override
                     public void onFailure(int i, String s) {
-                        AlertDialog.Builder builder = new AlertDialog.Builder(mContext);
-                        builder.setTitle("出错了").setMessage(s).setPositiveButton("确定", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                dialog.dismiss();
-                            }
-                        }).create().show();
+                        if (mProgressDialog.isShowing()) {
+                            mProgressDialog.dismiss();
+                        }
+                        showNoticeDialog("错误", s);
                         Log.i(TAG, "onFailure:更新失败 " + s);
                     }
                 });
@@ -447,20 +398,24 @@ public class UserEditActivity extends AppCompatActivity implements View.OnClickL
 
             @Override
             public void onProgress(Integer value) {
-                // 返回的上传进度（百分比）
+                mProgressDialog.setProgress(value);
             }
 
             @Override
             public void onFailure(int code, String msg) {
                 Log.i(TAG, "onFailure: 上传头像失败" + msg);
+                if (mProgressDialog.isShowing()) {
+                    mProgressDialog.dismiss();
+                }
+                showNoticeDialog("错误", msg);
             }
         });
     }
 
+
     //显示图片选择
     public void showPicturePicker(final Activity activity) {
         AlertDialog.Builder builder = new AlertDialog.Builder(activity);
-        builder.setTitle("图片来源");
         builder.setNegativeButton("取消", null);
         builder.setItems(new String[]{"拍照", "相册"}, new DialogInterface.OnClickListener() {
             @Override

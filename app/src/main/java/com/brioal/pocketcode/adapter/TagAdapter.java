@@ -11,7 +11,7 @@ import com.brioal.pocketcode.view.Tag;
 
 import java.util.List;
 
-/**
+/**每个item中的tag适配器
  * Created by Brioal on 2016/6/3.
  */
 

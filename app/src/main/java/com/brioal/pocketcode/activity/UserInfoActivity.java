@@ -1,6 +1,6 @@
 package com.brioal.pocketcode.activity;
 
-import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
@@ -10,19 +10,24 @@ import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.design.widget.TabLayout;
 import android.support.v4.view.ViewPager;
-import android.support.v7.app.AppCompatActivity;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.brioal.pocketcode.R;
 import com.brioal.pocketcode.adapter.UserInfoViewPager;
-import com.brioal.pocketcode.entiy.MyUser;
-import com.brioal.pocketcode.interfaces.ActivityInterFace;
+import com.brioal.pocketcode.base.BaseActivity;
+import com.brioal.pocketcode.entiy.AttentionEnity;
+import com.brioal.pocketcode.entiy.User;
 import com.brioal.pocketcode.util.BlurUtil;
+import com.brioal.pocketcode.util.Constants;
+import com.brioal.pocketcode.util.DataQuery;
 import com.brioal.pocketcode.util.StatusBarUtils;
 import com.brioal.pocketcode.util.ThemeUtil;
+import com.brioal.pocketcode.util.ToastUtils;
 import com.brioal.pocketcode.view.CircleImageView;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.animation.GlideAnimation;
@@ -30,9 +35,16 @@ import com.bumptech.glide.request.target.SimpleTarget;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
+import cn.bmob.v3.listener.DeleteListener;
+import cn.bmob.v3.listener.GetListener;
+import cn.bmob.v3.listener.UpdateListener;
 
+/**
+ * 用户信息展示
+ * 传入UserId ,当前用户传入null即可
+ */
 
-public class UserInfoActivity extends AppCompatActivity implements ActivityInterFace {
+public class UserInfoActivity extends BaseActivity {
     @Bind(R.id.user_info_name)
     TextView mName;
     @Bind(R.id.user_info_blog)
@@ -57,35 +69,112 @@ public class UserInfoActivity extends AppCompatActivity implements ActivityInter
     ViewPager mViewpager;
 
     private int mType;
-    private MyUser myUser;
-    private Context mContext;
+    private String mUserId;
+    private User mUser;
     private boolean isAdd = false;
     private boolean isDelete = false;
-
+    private boolean isAttention = false; //是否已经关注
+    private String attentionId; //如果以关注,则传入关注item的id
+    private AlertDialog mNoticeDialog;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        mContext = this;
+    public void initView(Bundle savedInstanceState) {
         setContentView(R.layout.activity_user_info);
         ButterKnife.bind(this);
-        initBar();
-        initData();
-        initView();
+        UserInfoViewPager vpAdapter = new UserInfoViewPager(getSupportFragmentManager(), mType);
+        mViewpager.setAdapter(vpAdapter);
+        mTabLayout.setupWithViewPager(mViewpager);
+    }
+
+    public void showNoticeDialog(String title, String message) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(mContext);
+        mNoticeDialog = builder.setTitle(title).setMessage(message).setPositiveButton("确认", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+            }
+        }).create();
+        mNoticeDialog.show();
     }
 
     @Override
-    public void initView() {
-        mName.setText(myUser.getUsername());
-        mBlog.setText(myUser.getmFavorite());
-        mDesc.setText(myUser.getmDesc());
-        mEdit.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                startActivityForResult(new Intent(mContext, UserEditActivity.class), 0);
+    public void setView() {
+        if (mType == UserInfoViewPager.TYPE_MINE) {
+            mEdit.setText("设置");
+            mEdit.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Intent intent = new Intent(mContext, UserEditActivity.class);
+                    User user = Constants.getmDataUtil(mContext).getUserLocal();
+                    intent.putExtra("User", user);
+                    startActivityForResult(intent, 0);
+                }
+            });
+        } else if (mType == UserInfoViewPager.TYPE_OTHER) {
+            if (isAttention) { //已关注
+                mEdit.setText("已关注");
+            } else { //未关注
+                mEdit.setText("未关注");
             }
-        });
-        String mUrl = myUser.getmHeadUrl(mContext);
+            mEdit.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Log.i(TAG, "onClick: 添加关注");
+                    User user = Constants.getmDataUtil(mContext).getUserLocal();
+                    if (user == null) { //未登陆
+                        Intent intent = new Intent(mContext, LoginAndRegisterActivity.class);
+                        startActivityForResult(intent, 0);
+                    } else {
+                        if (isAttention) { //已关注
+                            //取关操作
+                            AttentionEnity enity = new AttentionEnity();
+                            if (attentionId != null) {
+                                enity.delete(mContext, attentionId, new DeleteListener() {
+                                    @Override
+                                    public void onSuccess() {
+                                        Log.i(TAG, "onSuccess: 取关成功");
+                                        mEdit.setText("未关注");
+                                        isAttention = false;
+                                        setResult(RESULT_CANCELED);
+                                    }
+
+                                    @Override
+                                    public void onFailure(int i, String s) {
+                                        Log.i(TAG, "onFailure: 取关失败" + s);
+                                        showNoticeDialog("错误", s);
+                                    }
+                                });
+
+                            } else {
+                                ToastUtils.showToast(mContext, "获取数据失败,请重试");
+                            }
+                        } else { //未关注
+                            //添加关注操作
+                            AttentionEnity enity = new AttentionEnity(user.getObjectId(), mUserId);
+                            enity.update(mContext, new UpdateListener() {
+                                @Override
+                                public void onSuccess() {
+                                    setResult(RESULT_OK);
+                                    Log.i(TAG, "onSuccess: 上传关注数据成功");
+                                    mEdit.setText("已关注");
+                                    isAttention = true;
+                                }
+
+                                @Override
+                                public void onFailure(int i, String s) {
+                                    Log.i(TAG, "onFailure: 添加关注失败" + s);
+                                    showNoticeDialog("错误", s);
+                                }
+                            });
+                        }
+                    }
+                }
+            });
+        }
+        mName.setText(mUser.getUsername());
+        mBlog.setText(mUser.getmFavorite());
+        mDesc.setText(mUser.getmDesc());
+        String mUrl = mUser.getmHeadUrl(mContext);
         Glide.with(mContext).load(mUrl).asBitmap().into(new SimpleTarget<Bitmap>() {
             @Override
             public void onResourceReady(Bitmap bitmap, GlideAnimation<? super Bitmap> glideAnimation) {
@@ -99,7 +188,7 @@ public class UserInfoActivity extends AppCompatActivity implements ActivityInter
             @Override
             public void onOffsetChanged(AppBarLayout appBarLayout, int verticalOffset) {
                 if (verticalOffset <= -mHeadLayout.getHeight() / 2) {
-                    mToolLayout.setTitle(myUser.getUsername());
+                    mToolLayout.setTitle(mUser.getUsername());
                     mToolbar.setBackgroundColor(Color.parseColor(ThemeUtil.readThemeColor(mContext)
                     ));
                     mToolLayout.setExpandedTitleColor(Color.WHITE);
@@ -117,14 +206,6 @@ public class UserInfoActivity extends AppCompatActivity implements ActivityInter
                 }
             }
         });
-        UserInfoViewPager vpAdapter = new UserInfoViewPager(getSupportFragmentManager(), mType);
-        mViewpager.setAdapter(vpAdapter);
-        mTabLayout.setupWithViewPager(mViewpager);
-    }
-
-    @Override
-    public void setView() {
-
     }
 
     @Override
@@ -146,8 +227,31 @@ public class UserInfoActivity extends AppCompatActivity implements ActivityInter
 
     @Override
     public void initData() {
-        myUser = (MyUser) getIntent().getSerializableExtra("User");
-        mType = getIntent().getIntExtra("Type", 0);
+        mUserId = getIntent().getStringExtra("UserId");
+        isAttention = getIntent().getBooleanExtra("IsAttention", false);
+        attentionId = getIntent().getStringExtra("AttentionId");
+        if (mUserId == null) { //本地用户
+            mType = UserInfoViewPager.TYPE_MINE;
+            mUser = Constants.getmDataUtil(mContext).getUserLocal();
+            mHandler.sendEmptyMessage(0);
+
+        } else { //其他用户
+            mType = UserInfoViewPager.TYPE_OTHER;
+            DataQuery<User> query = new DataQuery<>();
+            query.getData(mContext, mUserId, new GetListener<User>() {
+                @Override
+                public void onSuccess(User user) {
+                    Log.i(TAG, "onSuccess: 加载用户信息成功");
+                    mUser = user;
+                    mHandler.sendEmptyMessage(0);
+                }
+
+                @Override
+                public void onFailure(int i, String s) {
+                    Log.i(TAG, "onFailure: 加载用户失败" + s);
+                }
+            });
+        }
     }
 
     @Override
@@ -159,8 +263,11 @@ public class UserInfoActivity extends AppCompatActivity implements ActivityInter
             finish();
         } else if (requestCode == 0 && resultCode == RESULT_OK) {
             //修改资料
+            loadDataLocal();
             setResult(RESULT_OK);
             finish();
+        } else if (requestCode == 0 && resultCode == 3) { //未做任何改变
+
         }
     }
 }

@@ -6,7 +6,7 @@ import android.content.Context;
 
 import static android.content.Context.CLIPBOARD_SERVICE;
 
-/**
+/**剪贴板管理类
  * Created by Brioal on 2016/6/3.
  */
 

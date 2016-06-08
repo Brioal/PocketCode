@@ -4,6 +4,12 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
 
+        android:id="@+id/action_refresh"
+        android:orderInCategory="100"
+        android:title="刷新"
+        app:showAsAction="never" />
+    <item
+
         android:id="@+id/action_up"
         android:orderInCategory="100"
         android:title="返回顶部"

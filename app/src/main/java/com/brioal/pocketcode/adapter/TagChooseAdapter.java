@@ -10,7 +10,7 @@ import android.widget.GridView;
 import android.widget.TextView;
 
 import com.brioal.pocketcode.R;
-import com.brioal.pocketcode.util.BrioalConstan;
+import com.brioal.pocketcode.util.Constants;
 import com.brioal.pocketcode.util.ToastUtils;
 import com.brioal.pocketcode.view.CircleHead;
 import com.brioal.pocketcode.view.Tag;
@@ -33,8 +33,8 @@ public class TagChooseAdapter extends RecyclerView.Adapter {
 
     public TagChooseAdapter(Context mContext) {
         this.mContext = mContext;
-        mGroups = BrioalConstan.getmDataUtil(mContext).getGroups();
-        mChilds = BrioalConstan.getmDataUtil(mContext).getChilds();
+        mGroups = Constants.getmDataUtil(mContext).getGroups();
+        mChilds = Constants.getmDataUtil(mContext).getChilds();
         if (mSelectTags == null) {
             mSelectTags = new ArrayList<>();
         } else {

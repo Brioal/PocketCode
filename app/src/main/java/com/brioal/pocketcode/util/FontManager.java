@@ -8,11 +8,12 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
-/**
+/**字体管理类
  * Created by Brioal on 2016/6/3.
  */
 
 public class FontManager {
+    //设置指定ViewGroup下的所有字体
     public static void changeFonts(ViewGroup root, Context context) {
         Typeface tf = Typeface.createFromAsset(context.getAssets(), "font.ttf");
         for (int i = 0; i < root.getChildCount(); i++) {
@@ -28,6 +29,7 @@ public class FontManager {
             }
         }
     }
+    //设置指定View的字体
     public static void changeFonts(View root, Context context) {
         Typeface tf = Typeface.createFromAsset(context.getAssets(), "font.ttf");
             if (root instanceof TextView) {

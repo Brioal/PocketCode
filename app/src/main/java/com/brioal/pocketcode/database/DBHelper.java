@@ -4,13 +4,13 @@ import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
-/**
+/**数据库操作类
  * Created by Brioal on 2016/5/12.
  */
 public class DBHelper extends SQLiteOpenHelper {
     private final String CREATE_CLASSIFT_TABLE = "create table Classify ( _id integer primary key autoincrement , mId integer , mClassify )";
     private final String CREATE_BANNER_TABLE = "create table Banner ( _id integer primary key autoincrement ,mContentId ,  mTip , mUrl , mImageUrl )";
-    private final String CREATE_CONTENT_TABLE = "create table Content ( _id integer primary key autoincrement ,mAuthorId , mTitle , mDesc ,mClassify , mTime long ,  mComment integer , mPraise integer , mRead integer ,mCollect integer ,mUrl , mHeadUrl )";
+    private final String CREATE_CONTENT_TABLE = "create table Content ( _id integer primary key autoincrement ,mAuthorId , mTitle , mDesc ,mClassify , mTime long ,  mComment integer , mPraise integer , mRead integer ,mCollect integer ,mUrl , mHeadUrl , mObjectId )";
     private final String CREATE_FAVORITE_TABLE = "create table Favorite ( _id integer primary key autoincrement , mContentObjectId )";
     private final String CREATE_TAG_TABLE = "create table Tag ( _id integer primary key autoincrement , mTag )" ; //创建本地标签表
     private final String CREATE_COLLECT_TABLE = "create table Collect ( _id integer primary key autoincrement , mUserId , mMessageId )"; //创建用户收藏表

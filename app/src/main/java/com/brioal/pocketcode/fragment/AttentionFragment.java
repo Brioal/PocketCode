@@ -1,28 +1,22 @@
 package com.brioal.pocketcode.fragment;
 
-import android.content.Context;
 import android.graphics.Color;
-import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-import android.support.annotation.Nullable;
-import android.support.v4.app.Fragment;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
 
 import com.brioal.pocketcode.R;
 import com.brioal.pocketcode.adapter.AttentionAdapter;
+import com.brioal.pocketcode.base.BaseFragment;
 import com.brioal.pocketcode.database.DBHelper;
 import com.brioal.pocketcode.entiy.AttentionEnity;
-import com.brioal.pocketcode.entiy.MyUser;
-import com.brioal.pocketcode.interfaces.FragmentInterface;
+import com.brioal.pocketcode.entiy.User;
 import com.brioal.pocketcode.interfaces.OnLoaderMoreListener;
-import com.brioal.pocketcode.util.BrioalConstan;
+import com.brioal.pocketcode.util.Constants;
+import com.brioal.pocketcode.util.DataQuery;
 import com.brioal.pocketcode.util.NetWorkUtil;
 
 import java.util.List;
@@ -36,16 +30,14 @@ import static com.brioal.pocketcode.fragment.MainFragment.LOAD_LIMIT;
  * Created by Brioal on 2016/5/31.
  */
 
-public class AttentionFragment extends Fragment implements FragmentInterface, OnLoaderMoreListener {
+public class AttentionFragment extends BaseFragment implements  OnLoaderMoreListener {
     public static AttentionFragment mFragment;
-    private View rootView;
-    private Context mContext;
     private AttentionAdapter mAdapter;
     private List<AttentionEnity> mList;
     private DBHelper mHelper;
     private RecyclerView mRecyclerView;
     private SwipeRefreshLayout mRefreshLayout;
-    private MyUser myUser;
+    private User user;
     private int mCount = 0;
     private Runnable mRunnable = new Runnable() {
         @Override
@@ -73,19 +65,22 @@ public class AttentionFragment extends Fragment implements FragmentInterface, On
         return mFragment;
     }
 
+
     @Override
-    public void initData() {
-        myUser = BrioalConstan.getmLocalUser(mContext).getUser();
-        mList = BrioalConstan.getmDataUtil(mContext).getAttentions(myUser.getObjectId());
+    public void loadDataLocal() {
+        super.loadDataLocal();
+        mList = Constants.getmDataUtil(mContext).getAttentions(user.getObjectId());
         if (mList.size() > 0) {
             mHandler.sendEmptyMessage(0);
         }
+    }
+
+    @Override
+    public void loadDataNet() {
+        super.loadDataNet();
         if (NetWorkUtil.isNetworkConnected(mContext)) {
-            BmobQuery<AttentionEnity> query = new BmobQuery<>();
-            query.setLimit(30);
-            query.order("-createdAt");
-            query.addWhereEqualTo("mUserId", myUser.getObjectId());
-            query.findObjects(mContext, new FindListener<AttentionEnity>() {
+            DataQuery<AttentionEnity> query = new DataQuery<>();
+            query.getDatas(mContext,100,0,"-createdAt",0,"mUserId", user.getObjectId(),new FindListener<AttentionEnity>() {
                 @Override
                 public void onSuccess(List<AttentionEnity> list) {
                     Log.i(TAG, "onSuccess: 获取关注数据成功");
@@ -102,12 +97,17 @@ public class AttentionFragment extends Fragment implements FragmentInterface, On
             });
         }
     }
+    @Override
+    public void initData() {
+        user = Constants.getmDataUtil(mContext).getUserLocal();
+    }
 
 
     @Override
     public void initView() {
-        mRecyclerView = (RecyclerView) rootView.findViewById(R.id.fragment_attention_recyclerView);
-        mRefreshLayout = (SwipeRefreshLayout) rootView.findViewById(R.id.fragment_attention_refreshLayout);
+        mRootView = inflater.inflate(R.layout.fragment_attention, container, false);
+        mRecyclerView = (RecyclerView) mRootView.findViewById(R.id.fragment_attention_recyclerView);
+        mRefreshLayout = (SwipeRefreshLayout) mRootView.findViewById(R.id.fragment_attention_refreshLayout);
         mRefreshLayout.setColorSchemeColors(Color.BLUE, Color.GREEN, Color.RED);
         mRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
@@ -119,6 +119,7 @@ public class AttentionFragment extends Fragment implements FragmentInterface, On
 
     @Override
     public void setView() {
+
         mAdapter = new AttentionAdapter(mContext, mList, AttentionAdapter.TYPE_ATTENTION);
         mAdapter.setLoaderMoreListener(this);
         mRecyclerView.setLayoutManager(new LinearLayoutManager(mContext));
@@ -127,23 +128,6 @@ public class AttentionFragment extends Fragment implements FragmentInterface, On
             mRefreshLayout.setRefreshing(false);
         }
     }
-
-    @Nullable
-    @Override
-    public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        mContext = getActivity();
-        mHelper = BrioalConstan.getDbHelper(mContext);
-        rootView = inflater.inflate(R.layout.fragment_attention, container, false);
-        return rootView;
-    }
-
-    @Override
-    public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
-        initView();
-        new Thread(mRunnable).start();
-    }
-
     @Override
     public void loadMore() {
         mCount = mList.size();
@@ -171,7 +155,7 @@ public class AttentionFragment extends Fragment implements FragmentInterface, On
     @Override
     public void onDestroy() {
         Log.i(TAG, "onDestroy: 保存数据到本地");
-        BrioalConstan.getmDataUtil(mContext).saveAttentions(mList,myUser.getObjectId());
+        Constants.getmDataUtil(mContext).saveAttentions(mList, user.getObjectId());
         super.onDestroy();
     }
 }

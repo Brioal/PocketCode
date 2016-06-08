@@ -13,7 +13,7 @@
 
         <android.support.design.widget.TextInputLayout style="@style/login_textinput_layout">
 
-            <android.support.v7.widget.AppCompatMultiAutoCompleteTextView
+            <EditText
                 android:inputType="text"
                 android:imeOptions="actionNext"
                 android:id="@+id/login_et_username"
@@ -26,7 +26,7 @@
 
         <android.support.design.widget.TextInputLayout style="@style/login_textinput_layout">
 
-            <android.support.v7.widget.AppCompatMultiAutoCompleteTextView
+            <EditText
                 android:inputType="textPassword"
                 android:imeOptions="actionDone"
                 android:id="@+id/login_et_password"

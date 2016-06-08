@@ -12,7 +12,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Interpolator;
 
-/**
+/**fab动作
  * Created by Brioal on 2016/4/7.
  */
 public class FabBehavior extends FloatingActionButton.Behavior {

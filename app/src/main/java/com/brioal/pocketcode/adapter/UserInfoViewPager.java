@@ -7,9 +7,11 @@ import android.support.v4.app.FragmentPagerAdapter;
 import com.brioal.pocketcode.fragment.AttentionFragment;
 import com.brioal.pocketcode.fragment.CollectListFragment;
 import com.brioal.pocketcode.fragment.FansFragment;
-import com.brioal.pocketcode.fragment.PageFragment;
 import com.brioal.pocketcode.fragment.ShareListFragment;
 
+/**默认是"我"的
+ * 用户信息的viewpager
+ */
 public class UserInfoViewPager extends FragmentPagerAdapter {
     public static int TYPE_MINE = 0;
     public static int TYPE_OTHER = 1;
@@ -35,7 +37,7 @@ public class UserInfoViewPager extends FragmentPagerAdapter {
             case 3:
                 return FansFragment.getInstance();
         }
-        return PageFragment.newInstance(0);
+        return null;
     }
 
     @Override

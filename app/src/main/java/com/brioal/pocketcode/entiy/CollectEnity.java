@@ -2,7 +2,7 @@ package com.brioal.pocketcode.entiy;
 
 import cn.bmob.v3.BmobObject;
 
-/**
+/**收藏列表实体类
  * Created by Brioal on 2016/5/31.
  */
 
@@ -19,15 +19,8 @@ public class CollectEnity extends BmobObject {
         return mUserId;
     }
 
-    public void setmUserId(String mUserId) {
-        this.mUserId = mUserId;
-    }
-
     public String getmMessageId() {
         return mMessageId;
     }
 
-    public void setmMessageId(String mMessageId) {
-        this.mMessageId = mMessageId;
-    }
 }

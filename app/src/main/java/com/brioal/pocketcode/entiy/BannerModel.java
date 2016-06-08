@@ -5,7 +5,7 @@ import android.content.Context;
 import cn.bmob.v3.BmobObject;
 import cn.bmob.v3.datatype.BmobFile;
 
-/**
+/**首页轮播实体类
  * Created by Brioal on 2016/5/12.
  */
 public class BannerModel  extends BmobObject{
@@ -28,31 +28,19 @@ public class BannerModel  extends BmobObject{
         return mContentId;
     }
 
-    public void setmContentId(String mContentId) {
-        this.mContentId = mContentId;
-    }
 
     public String getmImageUrl(Context mContext) {
         return mImageUrl==null?mImage.getFileUrl(mContext):mImageUrl;
     }
 
-    public void setmImageUrl(String mImageUrl) {
-        this.mImageUrl = mImageUrl;
-    }
 
     public String getmTip() {
         return mTip;
     }
 
-    public void setmTip(String mTip) {
-        this.mTip = mTip;
-    }
 
     public String getmUrl() {
         return mUrl;
     }
 
-    public void setmUrl(String mUrl) {
-        this.mUrl = mUrl;
-    }
 }

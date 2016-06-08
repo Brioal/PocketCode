@@ -7,14 +7,16 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.CheckBox;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.brioal.pocketcode.R;
 import com.brioal.pocketcode.activity.WebViewActivity;
 import com.brioal.pocketcode.entiy.BannerModel;
+import com.brioal.pocketcode.entiy.CommentModel;
 import com.brioal.pocketcode.entiy.ContentModel;
-import com.brioal.pocketcode.entiy.MyUser;
+import com.brioal.pocketcode.entiy.User;
 import com.brioal.pocketcode.fragment.MainFragment;
 import com.brioal.pocketcode.interfaces.OnLoaderMoreListener;
 import com.brioal.pocketcode.util.NetWorkUtil;
@@ -31,6 +33,7 @@ import cn.bmob.v3.BmobQuery;
 import cn.bmob.v3.listener.FindListener;
 
 /**
+ * 文章的适配器
  * Created by Brioal on 2016/5/12.
  */
 public class ContentAdapter extends RecyclerView.Adapter {
@@ -90,9 +93,7 @@ public class ContentAdapter extends RecyclerView.Adapter {
                         @Override
                         public void onClick(View v) {
                             Intent intent = new Intent(mContext, WebViewActivity.class);
-                            intent.putExtra("Url", model.getmUrl());
-                            intent.putExtra("Title", model.getmTip());
-                            intent.putExtra("Id", model.getmContentId());
+                            intent.putExtra("MessageId", model.getmContentId());
                             mContext.startActivity(intent);
                         }
                     });
@@ -111,13 +112,13 @@ public class ContentAdapter extends RecyclerView.Adapter {
             ((ContentViewHolder) holder).mDesc.setText(model.getmDesc());
             String mHeadUrl = model.getmHeadUrl();
             if (mHeadUrl == null) {
-                BmobQuery<MyUser> query = new BmobQuery<MyUser>();
+                BmobQuery<User> query = new BmobQuery<User>();
                 query.addWhereEqualTo("objectId", model.getmHeadObject());
-                query.findObjects(mContext, new FindListener<MyUser>() {
+                query.findObjects(mContext, new FindListener<User>() {
                     @Override
-                    public void onSuccess(List<MyUser> object) {
+                    public void onSuccess(List<User> object) {
                         Log.i(TAG, "onSuccess: 查询用户成功");
-                        MyUser user = object.get(0);
+                        User user = object.get(0);
                         String mUrl = user.getmHeadUrl(mContext);
                         model.setmHeadUrl(mUrl);
                         Glide.with(mContext).load(mUrl).into(((ContentViewHolder) holder).mHead);
@@ -134,19 +135,43 @@ public class ContentAdapter extends RecyclerView.Adapter {
 
             ((ContentViewHolder) holder).mClassify.setText(model.getmClassify());
             ((ContentViewHolder) holder).mParise.setText(model.getmPraise() + "");
-            ((ContentViewHolder) holder).mMsg.setText(model.getmComment() + "");
+            ((ContentViewHolder) holder).mComment.setText(model.getmComment() + "");
             ((ContentViewHolder) holder).mRead.setText(model.getmRead() + "");
             ((ContentViewHolder) holder).mCollect.setText(model.getmCollect() + "");
             ((ContentViewHolder) holder).itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     Intent intent = new Intent(mContext, WebViewActivity.class);
-                    intent.putExtra("Url", model.getmUrl());
-                    intent.putExtra("Title", model.getmTitle());
-                    intent.putExtra("Id", model.getObjectId());
+                    intent.putExtra("Message", model);
                     mContext.startActivity(intent);
                 }
             });
+            if (model.getmComment() == -1) {
+                BmobQuery<CommentModel> query = new BmobQuery<>();
+                query.setLimit(1000);
+                query.addWhereEqualTo("mMessageId", model.getObjectId());
+                query.findObjects(mContext, new FindListener<CommentModel>() {
+                    @Override
+                    public void onSuccess(final List<CommentModel> list) {
+                        Log.i(TAG, "onSuccess: 查询评论数量成功" + list.size());
+                        ((ContentViewHolder) holder).mComment.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                ((ContentViewHolder) holder).mComment.setText(list.size() + "");
+
+                            }
+                        });
+                        model.setmComment(list.size());
+                    }
+
+                    @Override
+                    public void onError(int i, String s) {
+
+                    }
+                });
+            } else {
+                ((ContentViewHolder) holder).mComment.setText(model.getmComment() + "");
+            }
         } else if (holder instanceof LoadMoreViewHolder) {
             if (NetWorkUtil.isNetworkConnected(mContext)) {
                 loaderMoreListener.loadMore();
@@ -198,13 +223,13 @@ public class ContentAdapter extends RecyclerView.Adapter {
         @Bind(R.id.item_content_classify)
         TextView mClassify;
         @Bind(R.id.item_content_parise)
-        TextView mParise;
+        CheckBox mParise;
         @Bind(R.id.item_content_msg)
-        TextView mMsg;
+        TextView mComment;
         @Bind(R.id.item_content_read)
         TextView mRead;
         @Bind(R.id.item_content_collect)
-        TextView mCollect;
+        CheckBox mCollect;
         View itemView;
 
         public ContentViewHolder(View itemView) {

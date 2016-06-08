@@ -2,7 +2,6 @@ package com.brioal.pocketcode.activity;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.v7.app.AppCompatActivity;
 import android.view.Window;
 import android.view.WindowManager;
 import android.view.animation.AccelerateDecelerateInterpolator;
@@ -12,16 +11,16 @@ import android.widget.ImageView;
 
 import com.brioal.pocketcode.MainActivity;
 import com.brioal.pocketcode.R;
-import com.brioal.pocketcode.util.BrioalConstan;
+import com.brioal.pocketcode.base.BaseActivity;
 import com.brioal.pocketcode.util.BrioalUtil;
+import com.brioal.pocketcode.util.Constants;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
 import cn.bmob.v3.Bmob;
-import cn.bmob.v3.BmobConfig;
 
 
-public class LauncherActivity extends AppCompatActivity {
+public class LauncherActivity extends BaseActivity {
 
 
     @Bind(R.id.launcher_logo)
@@ -30,21 +29,39 @@ public class LauncherActivity extends AppCompatActivity {
     ImageView mDesc;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    public void initData() {
         setTheme(R.style.AppTheme_NoActionBar);
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_launcher);
-        ButterKnife.bind(this);
-        initWindow();
+        super.initData();
         initSdk();
+    }
+
+    @Override
+    public void loadDataLocal() {
+        super.loadDataLocal();
+        mHandler.sendEmptyMessage(0);
+    }
+
+    @Override
+    public void setView() {
+        super.setView();
         startAnimation();
     }
 
+    @Override
+    public void initView(Bundle savedInstanceState) {
+        super.initView(savedInstanceState);
+        setContentView(R.layout.activity_launcher);
+        ButterKnife.bind(this);
+        initWindow();
+    }
+
+    //全屏设置
     private void initWindow() {
         Window window = getWindow();
         window.addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
     }
 
+    //开始动画
     private void startAnimation() {
         Animation animation = AnimationUtils.loadAnimation(this, R.anim.launcher_logo);
         animation.setDuration(1500);
@@ -72,18 +89,9 @@ public class LauncherActivity extends AppCompatActivity {
         mDesc.startAnimation(animation);
     }
 
+    //初始化后台接口
     private void initSdk() {
-        BmobConfig config =new BmobConfig.Builder(this)
-        ////设置appkey
-        .setApplicationId(BrioalConstan.APPID)
-        ////请求超时时间（单位为秒）：默认15s
-        .setConnectTimeout(30)
-        ////文件分片上传时每片的大小（单位字节），默认512*1024
-        .setUploadBlockSize(1024*1024)
-        ////文件的过期时间(单位为秒)：默认1800s
-        .setFileExpiration(2500)
-        .build();
-        Bmob.initialize(config);
+        Bmob.initialize(mContext, Constants.APPID);
         BrioalUtil.init(this);
     }
 }

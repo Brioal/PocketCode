@@ -5,10 +5,10 @@ import android.content.Context;
 import cn.bmob.v3.BmobUser;
 import cn.bmob.v3.datatype.BmobFile;
 
-/**
+/**用户实体类
  * Created by Brioal on 2016/5/14.
  */
-public class MyUser extends BmobUser {
+public class User extends BmobUser {
     private BmobFile mHead; //头像
     private String mDesc; //个人签名
     private String mFavorite; //兴趣
@@ -25,44 +25,13 @@ public class MyUser extends BmobUser {
     private String mHeadUrl;  //头像链接
 
     public String getmHeadUrl(Context mContext) {
-        return mHeadUrl == null ? mHead.getFileUrl(mContext) : mHeadUrl;
+        return mHeadUrl == null ? mHead==null?null:mHead.getFileUrl(mContext) : mHeadUrl;
     }
 
     public void setmHead(BmobFile mHead) {
         this.mHead = mHead;
     }
 
-    public int getmShare() {
-        return mShare;
-    }
-
-    public void setmShare(int mShare) {
-        this.mShare = mShare;
-    }
-
-    public int getmBeFavorite() {
-        return mBeFavorite;
-    }
-
-    public void setmBeFavorite(int mBeFavorite) {
-        this.mBeFavorite = mBeFavorite;
-    }
-
-    public int getmBeRead() {
-        return mBeRead;
-    }
-
-    public void setmBeRead(int mBeRead) {
-        this.mBeRead = mBeRead;
-    }
-
-    public int getmCollect() {
-        return mCollect;
-    }
-
-    public void setmCollect(int mCollect) {
-        this.mCollect = mCollect;
-    }
 
     public String getmFavorite() {
         return mFavorite;
@@ -96,9 +65,6 @@ public class MyUser extends BmobUser {
         this.mQQ = mQQ;
     }
 
-    public BmobFile getmHead() {
-        return mHead;
-    }
 
     public String getmDesc() {
         return mDesc;

@@ -76,15 +76,16 @@
             android:textColor="@color/colorAccent"
             android:textSize="17sp" />
 
-        <LinearLayout
+        <com.brioal.pocketcode.view.MyGridView
+            android:numColumns="3"
             android:id="@+id/add_tag_layout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_margin="5dp"
             android:layout_marginTop="10dp"
-            android:orientation="horizontal">
+            >
 
-        </LinearLayout>
+        </com.brioal.pocketcode.view.MyGridView>
 
     </LinearLayout>
 </android.support.design.widget.CoordinatorLayout>

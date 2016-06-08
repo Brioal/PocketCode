@@ -11,6 +11,9 @@ import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.LinearLayout;
 
+/*
+状态栏辅助类
+ */
 public class StatusBarUtils {
 
     /**
@@ -59,8 +62,8 @@ public class StatusBarUtils {
             // 添加 statusView 到布局中
             ViewGroup decorView = (ViewGroup) activity.getWindow().getDecorView();
             Log.i("StatusUtil", "addColor: " + decorView.getChildCount());
-            Log.i("StatusUtil", "id: "+statusView.getId());
-            if (decorView.getChildAt(decorView.getChildCount()-1).getId() != Integer.valueOf(1)) {
+            Log.i("StatusUtil", "id: " + statusView.getId());
+            if (decorView.getChildAt(decorView.getChildCount() - 1).getId() != Integer.valueOf(1)) {
                 decorView.addView(statusView, decorView.getChildCount());
             }
             Log.i("StatusUtil", "addColor: " + decorView.getChildCount());
@@ -75,7 +78,7 @@ public class StatusBarUtils {
 
     /**
      * 使状态栏透明
-     * <p/>
+     * <p>
      * 适用于图片作为背景的界面,此时需要图片填充到状态栏
      *
      * @param activity 需要设置的activity
@@ -193,7 +196,7 @@ public class StatusBarUtils {
         statusBarView.setLayoutParams(params);
         statusBarView.setBackgroundColor(Color.parseColor(color));
         statusBarView.setId(Integer.valueOf(1));
-        Log.i("StatusUtil", "id: "+statusBarView.getId());
+        Log.i("StatusUtil", "id: " + statusBarView.getId());
 
         return statusBarView;
     }

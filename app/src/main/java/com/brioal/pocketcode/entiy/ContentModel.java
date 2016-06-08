@@ -3,6 +3,7 @@ package com.brioal.pocketcode.entiy;
 import cn.bmob.v3.BmobObject;
 
 /**
+ * 文章实体类
  * Created by Brioal on 2016/5/12.
  */
 public class ContentModel extends BmobObject {
@@ -17,6 +18,12 @@ public class ContentModel extends BmobObject {
     private int mRead; //阅读量
     private int mCollect; //收藏数量
     private String mUrl; //链接
+
+    private boolean isPraise ;
+    private boolean isCollect;
+
+    private boolean setPraise = false;
+    private boolean setCollect = false;
 
     private String mHeadUrl;
 
@@ -37,13 +44,36 @@ public class ContentModel extends BmobObject {
         this.mHeadUrl = mHeadUrl;
     }
 
+    public boolean isPraise() {
+        return isPraise;
+    }
+
+    public void setPraise(boolean praise) {
+        setPraise = true;
+        isPraise = praise;
+    }
+
+    public boolean isCollect() {
+        return isCollect;
+    }
+
+    public void setCollect(boolean collect) {
+        setCollect = true;
+        isCollect = collect;
+    }
+
+    public boolean isSetPraise() {
+        return setPraise;
+    }
+
+    public boolean isSetCollect() {
+        return setCollect;
+    }
+
     public int getmCollect() {
         return mCollect;
     }
 
-    public void setmCollect(int mCollect) {
-        this.mCollect = mCollect;
-    }
 
     public String getmHeadUrl() {
         return mHeadUrl;
@@ -61,54 +91,28 @@ public class ContentModel extends BmobObject {
         return mAuthorId;
     }
 
-    public void setmHeadObject(String mHeadObject) {
-        this.mAuthorId = mHeadObject;
-    }
-
-    public void setmUrl(String mUrl) {
-        this.mUrl = mUrl;
-    }
-
-    public int getmId() {
-        return mId;
-    }
-
-    public void setmId(int mId) {
-        this.mId = mId;
+    public String getmAuthorId() {
+        return mAuthorId;
     }
 
     public String getmClassify() {
         return mClassify;
     }
 
-    public void setmClassify(String mClassify) {
-        this.mClassify = mClassify;
-    }
 
     public long getmTime() {
         return mTime;
     }
 
-    public void setmTime(long mTime) {
-        this.mTime = mTime;
-    }
 
     public int getmRead() {
         return mRead;
     }
 
-    public void setmRead(int mRead) {
-        this.mRead = mRead;
-    }
-
-
     public String getmTitle() {
         return mTitle;
     }
 
-    public void setmTitle(String mTitle) {
-        this.mTitle = mTitle;
-    }
 
     public String getmDesc() {
         return mDesc;
@@ -120,10 +124,6 @@ public class ContentModel extends BmobObject {
 
     public int getmPraise() {
         return mPraise;
-    }
-
-    public void setmPraise(int mPraise) {
-        this.mPraise = mPraise;
     }
 
     public int getmComment() {

@@ -1,6 +1,7 @@
 package com.brioal.pocketcode.util;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
@@ -8,12 +9,20 @@ import android.util.Log;
 import com.brioal.pocketcode.database.DBHelper;
 import com.brioal.pocketcode.entiy.AttentionEnity;
 import com.brioal.pocketcode.entiy.BannerModel;
+import com.brioal.pocketcode.entiy.ClassifyModel;
 import com.brioal.pocketcode.entiy.CollectEnity;
+import com.brioal.pocketcode.entiy.CommentModel;
 import com.brioal.pocketcode.entiy.ContentModel;
+import com.brioal.pocketcode.entiy.User;
+import com.brioal.pocketcode.entiy.PraiseEntity;
+import com.brioal.pocketcode.interfaces.onCheckExitListener;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
+import cn.bmob.v3.BmobQuery;
+import cn.bmob.v3.listener.FindListener;
 
 /**
  * 数据操作工具类
@@ -28,7 +37,7 @@ public class DataUtil {
 
     public DataUtil(Context mContext) {
         this.mContext = mContext;
-        mHelper = BrioalConstan.getDbHelper(mContext);
+        mHelper = new DBHelper(mContext, "PocketCode.db3", null, 1);
     }
 
     //根据分类返回文章内容
@@ -44,9 +53,16 @@ public class DataUtil {
         }
         while (cursorContent.moveToNext()) {
             ContentModel model = new ContentModel(cursorContent.getString(1), cursorContent.getString(2), cursorContent.getString(3), cursorContent.getString(4), cursorContent.getLong(5), cursorContent.getInt(6), cursorContent.getInt(7), cursorContent.getInt(8), cursorContent.getInt(9), cursorContent.getString(10), cursorContent.getString(11));
+            model.setObjectId(cursorContent.getString(12));
             list.add(model);
         }
         return list;
+    }
+
+    //获取网络的分类数据
+    public void getContentNet(String classify, int limit, FindListener<ContentModel> listener) {
+        DataQuery<ContentModel> query = new DataQuery<>();
+        query.getDatas(mContext, limit, 0, "-createdAt", 0, "mClassify", classify, listener);
     }
 
     //保存文章数据及Banner
@@ -54,16 +70,7 @@ public class DataUtil {
         Log.i(TAG, "saveData: 保存首页数据");
         SQLiteDatabase db = mHelper.getReadableDatabase();
         if (banners != null) {
-            db.execSQL("delete from Banner where _id > 0 ");
-            for (int i = 0; i < banners.size(); i++) {
-                BannerModel model = banners.get(i);
-                db.execSQL("insert into Banner values (null , ? , ? , ? , ? )", new Object[]{
-                        model.getmContentId(),
-                        model.getmTip(),
-                        model.getmUrl(),
-                        model.getmImageUrl(mContext)
-                });
-            }
+            db.execSQL("delete from Banner where _id >= 0 ");
             for (int i = 0; i < banners.size(); i++) {
                 BannerModel model = banners.get(i);
                 db.execSQL("insert into Banner values (null , ? , ? , ? , ? )", new Object[]{
@@ -77,7 +84,7 @@ public class DataUtil {
         db.execSQL("delete from Content where _id > 0 ");
         for (int i = 0; i < list.size(); i++) {
             ContentModel model = list.get(i);
-            db.execSQL("insert into Content values ( null , ? , ? , ? , ? , ? , ? , ? , ? ,? ,? , ?)", new Object[]{
+            db.execSQL("insert into Content values ( null , ? , ? , ? , ? , ? , ? , ? , ? ,? ,? , ? , ? )", new Object[]{
                     model.getmHeadObject(),
                     model.getmTitle(),
                     model.getmDesc(),
@@ -88,7 +95,8 @@ public class DataUtil {
                     model.getmRead(),
                     model.getmCollect(),
                     model.getmUrl(),
-                    model.getmHeadUrl()
+                    model.getmHeadUrl(),
+                    model.getObjectId()
             });
         }
         db.close();
@@ -124,7 +132,7 @@ public class DataUtil {
     //保存收藏的文章列表
     public void saveCollects(List<CollectEnity> list) {
         SQLiteDatabase db = mHelper.getReadableDatabase();
-        db.execSQL("delete from Collect where _id > 0 ");
+        db.execSQL("delete  from Collect where _id > 0 ");
         for (int i = 0; i < list.size(); i++) {
             CollectEnity enity = list.get(i);
             db.execSQL("insert into Collect values ( null , ? , ? )", new Object[]{
@@ -153,7 +161,7 @@ public class DataUtil {
     //保存关注到本地
     public void saveAttentions(List<AttentionEnity> list, String userId) {
         SQLiteDatabase db = mHelper.getReadableDatabase();
-        db.execSQL("delete from Attention where mAuthorId ='" + userId + "'"); //删除原有内容
+        db.execSQL("delete  from Attention where mAuthorId ='" + userId + "'"); //删除原有内容
         for (int i = 0; i < list.size(); i++) {
             AttentionEnity enity = list.get(i);
             db.execSQL("insert into Attention values ( null , ? , ? )", new Object[]{
@@ -181,7 +189,7 @@ public class DataUtil {
     //保存粉丝数据
     public void saveFans(List<AttentionEnity> list, String userId) {
         SQLiteDatabase db = mHelper.getReadableDatabase();
-        db.execSQL("delete from Attention where mAuthorId ='" + userId + "'"); //删除原有内容
+        db.execSQL("delete  from Attention where mAuthorId ='" + userId + "'"); //删除原有内容
         for (int i = 0; i < list.size(); i++) {
             AttentionEnity enity = list.get(i);
             db.execSQL("insert into Attention values ( null , ? , ? )", new Object[]{
@@ -233,6 +241,7 @@ public class DataUtil {
         return Arrays.asList(heads);
     }
 
+    //获取tag数据
     public List<List<String>> getChilds() {
         String[][] childs = new String[][]{
 
@@ -290,4 +299,168 @@ public class DataUtil {
         }
         return result;
     }
+
+
+    //读取本地的分类数据
+    public List<ClassifyModel> getClassifyLocal() {
+        List<ClassifyModel> list = new ArrayList<>();
+        SQLiteDatabase database = mHelper.getReadableDatabase();
+        Cursor cursor = database.rawQuery("select * from Classify", null);
+        while (cursor.moveToNext()) {
+            ClassifyModel model = new ClassifyModel(cursor.getInt(1), cursor.getString(2));
+            list.add(model);
+        }
+        cursor.close();
+        return list;
+    }
+
+    //获取网络的分类数据
+    public void getClassifyNet(FindListener<ClassifyModel> listener) {
+        DataQuery<ClassifyModel> query = new DataQuery<>();
+        query.getDatas(mContext, 20, 0, "", -1, "", null, listener);
+    }
+
+    //保存分类数据到本地
+    public void saveClassifyLocal(List<ClassifyModel> list) {
+        SQLiteDatabase db = mHelper.getReadableDatabase();
+        db.execSQL("delete from Classify where _id > 0"); //清空
+        for (int i = 0; i < list.size(); i++) {
+            ClassifyModel model = list.get(i);
+            db.execSQL("insert into Classify values ( null , ? , ? )", new Object[]{
+                    model.getmId(),
+                    model.getmClassify()
+            });
+        }
+    }
+
+    //从网络获取评论数据
+    public void getCommentNet(String messageId, FindListener<CommentModel> listener) {
+        DataQuery<CommentModel> query = new DataQuery<>();
+        query.getDatas(mContext, 100, 0, "-createdAt", 0, "mMessageId", messageId, listener);
+    }
+
+
+    //保存用户信息到本地
+    public void saveUserLocal(User user) {
+        SharedPreferences preferences = mContext.getSharedPreferences("PocketCode", Context.MODE_APPEND);
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.putString("Id", user.getObjectId());
+        editor.putString("UserName", user.getUsername());
+        editor.putString("HeadUrl", user.getmHeadUrl(mContext));
+        editor.putString("Desc", user.getmDesc());
+        editor.putString("Favorite", user.getmFavorite());
+        editor.putString("Blog", user.getmBlog());
+        editor.putString("GitHub", user.getmGitHub());
+        editor.putString("QQ", user.getmQQ());
+
+        editor.apply();
+    }
+
+    //获取本地用户信息
+    public User getUserLocal() {
+        SharedPreferences preferences = mContext.getSharedPreferences("PocketCode", Context.MODE_APPEND);
+        String mObjectId = preferences.getString("Id", "");
+        String mUserName = preferences.getString("UserName", "");
+        String mHeadUrl = preferences.getString("HeadUrl", "");
+        String mDesc = preferences.getString("Desc", "");
+        String mFavorite = preferences.getString("Favorite", "");
+        String mBlog = preferences.getString("Blog", "");
+        String mGithub = preferences.getString("GitHub", "");
+        String mQQ = preferences.getString("QQ", "");
+        if (mUserName.isEmpty()) {
+            return null;
+        } else {
+            User user = new User();
+            user.setObjectId(mObjectId);
+            user.setUsername(mUserName);
+            user.setmHeadUrl(mHeadUrl);
+            user.setmFavorite(mFavorite);
+            user.setmDesc(mDesc);
+            user.setmBlog(mBlog);
+            user.setmGitHub(mGithub);
+            user.setmQQ(mQQ);
+            return user;
+        }
+    }
+
+    //注销登录
+    public void deleteUserLocal() {
+        SharedPreferences preferences = mContext.getSharedPreferences("PocketCode", Context.MODE_APPEND);
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.clear();
+        editor.apply();
+    }
+
+    //获取是否存在这样一条关注 我的id  , 别人的id
+    public void isAttentionExit(String mineId, String otherId, final onCheckExitListener listener) {
+        BmobQuery<AttentionEnity> query = new BmobQuery<>();
+        query.addWhereEqualTo("mUserId", mineId);
+        query.addWhereEqualTo("mAuthorId", otherId);
+        query.findObjects(mContext, new FindListener<AttentionEnity>() {
+            @Override
+            public void onSuccess(List<AttentionEnity> list) {
+                Log.i(TAG, "onSuccess: 查询关注数据成功");
+                if (list.size() == 0) {
+                    listener.noExit();
+                } else {
+                    listener.exit(list.get(0).getObjectId());
+                }
+            }
+
+            @Override
+            public void onError(int i, String s) {
+                Log.i(TAG, "onError: 查询关注数据失败" + s);
+                listener.noExit();
+            }
+        });
+    }
+
+    //查询是否收藏了当前的文章
+    public void isCollect(String userId, String messageId, final onCheckExitListener listerner) {
+        BmobQuery<CollectEnity> query = new BmobQuery<>();
+        query.addWhereEqualTo("mUserId", userId);
+        query.addWhereEqualTo("mMessageId", messageId);
+        query.findObjects(mContext, new FindListener<CollectEnity>() {
+            @Override
+            public void onSuccess(List<CollectEnity> list) {
+                Log.i(TAG, "onSuccess: 查询是否收藏成功" + list.size());
+                if (list.size() == 0) {
+                    listerner.noExit();
+                } else {
+                    listerner.exit(list.get(0).getObjectId());
+                }
+            }
+
+            @Override
+            public void onError(int i, String s) {
+                Log.i(TAG, "onError: 加载失败" + s);
+                listerner.noExit();
+            }
+        });
+    }
+
+    //查询是否给当前文章点赞
+    public void isParise(String userId, String messageId, final onCheckExitListener listener) {
+        BmobQuery<PraiseEntity> query = new BmobQuery<>();
+        query.addWhereEqualTo("mUserId", userId);
+        query.addWhereEqualTo("mMessageId", messageId);
+        query.findObjects(mContext, new FindListener<PraiseEntity>() {
+            @Override
+            public void onSuccess(List<PraiseEntity> list) {
+                Log.i(TAG, "onSuccess: 查询点赞信息失败");
+                if (list.size() == 0) {
+                    listener.noExit();
+                } else {
+                    listener.exit(list.get(0).getObjectId());
+                }
+            }
+
+            @Override
+            public void onError(int i, String s) {
+                Log.i(TAG, "onError: 查询点赞信息失败" + s);
+            }
+        });
+    }
+
+
 }

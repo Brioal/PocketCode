@@ -1,7 +1,6 @@
 package com.brioal.pocketcode.activity;
 
 import android.content.ClipboardManager;
-import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.net.Uri;
@@ -12,7 +11,6 @@ import android.view.View;
 import android.widget.TextView;
 
 import com.brioal.pocketcode.R;
-import com.brioal.pocketcode.interfaces.ActivityInterFace;
 import com.brioal.pocketcode.util.StatusBarUtils;
 import com.brioal.pocketcode.util.ThemeUtil;
 import com.brioal.pocketcode.util.ToastUtils;
@@ -21,7 +19,7 @@ import com.brioal.pocketcode.view.swipeback.app.SwipeBackActivity;
 import butterknife.Bind;
 import butterknife.ButterKnife;
 
-public class AboutActivity extends SwipeBackActivity implements ActivityInterFace, View.OnClickListener {
+public class AboutActivity extends SwipeBackActivity implements View.OnClickListener {
 
     @Bind(R.id.toolBar)
     Toolbar mToolBar;
@@ -35,17 +33,7 @@ public class AboutActivity extends SwipeBackActivity implements ActivityInterFac
     TextView mBtnQq;
     @Bind(R.id.about_btn_email)
     TextView mBtnEmail;
-    private Context mContext;
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        mContext = this;
-        setContentView(R.layout.activity_about);
-        ButterKnife.bind(this);
-        initBar();
-        setView();
-    }
 
     @Override
     protected void onResume() {
@@ -83,8 +71,14 @@ public class AboutActivity extends SwipeBackActivity implements ActivityInterFac
     }
 
     @Override
-    public void initView() {
+    public void loadDataNet() {
+        mHandler.sendEmptyMessage(0);
+    }
 
+    @Override
+    public void initView(Bundle savedInstanceState) {
+        setContentView(R.layout.activity_about);
+        ButterKnife.bind(this);
     }
 
     @Override

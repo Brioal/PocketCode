@@ -1,6 +1,7 @@
 package com.brioal.pocketcode.adapter;
 
 import android.content.Context;
+import android.content.Intent;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -9,8 +10,10 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.brioal.pocketcode.R;
+import com.brioal.pocketcode.activity.AttentionActivity;
+import com.brioal.pocketcode.activity.UserInfoActivity;
 import com.brioal.pocketcode.entiy.AttentionEnity;
-import com.brioal.pocketcode.entiy.MyUser;
+import com.brioal.pocketcode.entiy.User;
 import com.brioal.pocketcode.fragment.MainFragment;
 import com.brioal.pocketcode.interfaces.OnLoaderMoreListener;
 import com.brioal.pocketcode.view.CircleImageView;
@@ -24,6 +27,7 @@ import cn.bmob.v3.BmobQuery;
 import cn.bmob.v3.listener.GetListener;
 
 /**
+ * 我的关注的适配器
  * Created by Brioal on 2016/5/31.
  */
 
@@ -69,30 +73,55 @@ public class AttentionAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
     @Override
     public void onBindViewHolder(final RecyclerView.ViewHolder holder, int position) {
         if (holder instanceof AttentionViewHolder) {
-            AttentionEnity enity = mList.get(position);
+            final AttentionEnity enity = mList.get(position);
             String id = null;
             if (mType == TYPE_ATTENTION) { //关注别人,显示被关注人的
                 id = enity.getmAuthorId();
+                final String finalId = id;
+                ((AttentionViewHolder) holder).itemView.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        Intent intent = new Intent(mContext, UserInfoActivity.class);
+                        intent.putExtra("UserId", finalId);
+                        if (mType == TYPE_ATTENTION) { //我关注别人
+                            intent.putExtra("IsAttention", true);
+                            intent.putExtra("AttentionId", enity.getObjectId());
+                        } else if (mType == TYPE_FANS) { //我的粉丝
+                            intent.putExtra("IsAttention", true);
+                            intent.putExtra("AttentionId", enity.getObjectId());
+                        }
+                        ((AttentionActivity) mContext).startActivityForResult(intent, 0);
+                    }
+                });
             } else if (mType == TYPE_FANS) { //粉丝,显示关注人
                 id = enity.getmUserId();
             }
-            BmobQuery<MyUser> query = new BmobQuery<>();
-            query.getObject(mContext, id, new GetListener<MyUser>() {
-                @Override
-                public void onSuccess(MyUser bmobUser) {
-                    Log.i(TAG, "onSuccess: 用户查询成功");
-                    MyUser user = (MyUser) bmobUser;
-                    ((AttentionViewHolder) holder).mName.setText(bmobUser.getUsername());
-                    ((AttentionViewHolder) holder).mDesc.setText(bmobUser.getmDesc());
-                    String url = bmobUser.getmHeadUrl(mContext);
-                    Glide.with(mContext).load(url).into(((AttentionViewHolder) holder).mHead);
-                }
+            if (enity.getmName() == null || enity.getmDesc() == null || enity.getmUserHeadUrl() == null) {
+                BmobQuery<User> query = new BmobQuery<>();
+                query.getObject(mContext, id, new GetListener<User>() {
+                    @Override
+                    public void onSuccess(User bmobUser) {
+                        Log.i(TAG, "onSuccess: 用户查询成功");
+                        enity.setmName(bmobUser.getUsername());
+                        enity.setmDesc(bmobUser.getmDesc());
+                        enity.setmUserHeadUrl(bmobUser.getmHeadUrl(mContext));
+                        ((AttentionViewHolder) holder).mName.setText(enity.getmName());
+                        ((AttentionViewHolder) holder).mDesc.setText(enity.getmDesc());
+                        Glide.with(mContext).load(enity.getmUserHeadUrl()).into(((AttentionViewHolder) holder).mHead);
+                    }
 
-                @Override
-                public void onFailure(int i, String s) {
-                    Log.i(TAG, "onFailure: 用户查询失败");
-                }
-            });
+                    @Override
+                    public void onFailure(int i, String s) {
+                        Log.i(TAG, "onFailure: 用户查询失败");
+                    }
+                });
+            } else {
+                ((AttentionViewHolder) holder).mName.setText(enity.getmName());
+                ((AttentionViewHolder) holder).mDesc.setText(enity.getmDesc());
+                Glide.with(mContext).load(enity.getmUserHeadUrl()).into(((AttentionViewHolder) holder).mHead);
+            }
+
+
         } else if (holder instanceof LoadMoreViewHolder) {
             loaderMoreListener.loadMore();
         }

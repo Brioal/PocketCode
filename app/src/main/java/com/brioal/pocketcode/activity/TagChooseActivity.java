@@ -1,10 +1,8 @@
 package com.brioal.pocketcode.activity;
 
-import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
@@ -13,7 +11,7 @@ import android.view.MenuItem;
 
 import com.brioal.pocketcode.R;
 import com.brioal.pocketcode.adapter.TagChooseAdapter;
-import com.brioal.pocketcode.interfaces.ActivityInterFace;
+import com.brioal.pocketcode.base.BaseActivity;
 import com.brioal.pocketcode.util.StatusBarUtils;
 import com.brioal.pocketcode.util.ThemeUtil;
 
@@ -22,7 +20,7 @@ import java.util.ArrayList;
 import butterknife.Bind;
 import butterknife.ButterKnife;
 
-public class TagChooseActivity extends AppCompatActivity implements ActivityInterFace {
+public class TagChooseActivity extends BaseActivity {
 
     @Bind(R.id.toolBar)
     Toolbar mToolBar;
@@ -30,17 +28,6 @@ public class TagChooseActivity extends AppCompatActivity implements ActivityInte
     RecyclerView mRecyclerView;
     private TagChooseAdapter mAdapter;
 
-    private Context mcontext;
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        mcontext = this;
-        setContentView(R.layout.activity_tag_choose);
-        ButterKnife.bind(this);
-        initBar();
-        setView();
-    }
 
     @Override
     protected void onResume() {
@@ -57,7 +44,7 @@ public class TagChooseActivity extends AppCompatActivity implements ActivityInte
 
     @Override
     public void initTheme() {
-        String color = ThemeUtil.readThemeColor(mcontext);
+        String color = ThemeUtil.readThemeColor(mContext);
         mToolBar.setBackgroundColor(Color.parseColor(color));
         StatusBarUtils.setColor(this, color);
     }
@@ -68,15 +55,22 @@ public class TagChooseActivity extends AppCompatActivity implements ActivityInte
     }
 
     @Override
-    public void initView() {
+    public void initView(Bundle savedInstanceState) {
+        setContentView(R.layout.activity_tag_choose);
+        ButterKnife.bind(this);
+    }
 
+    @Override
+    public void loadDataNet() {
+        super.loadDataNet();
+        mHandler.sendEmptyMessage(0);
     }
 
     @Override
     public void setView() {
         if (mAdapter == null) {
-            mRecyclerView.setLayoutManager(new LinearLayoutManager(mcontext));
-            mAdapter = new TagChooseAdapter(mcontext);
+            mRecyclerView.setLayoutManager(new LinearLayoutManager(mContext));
+            mAdapter = new TagChooseAdapter(mContext);
             mRecyclerView.setAdapter(mAdapter);
         } else {
             mAdapter.notifyDataSetChanged();

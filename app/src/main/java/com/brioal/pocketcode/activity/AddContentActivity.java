@@ -11,7 +11,6 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -21,20 +20,20 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.brioal.pocketcode.R;
+import com.brioal.pocketcode.base.BaseActivity;
 import com.brioal.pocketcode.database.DBHelper;
 import com.brioal.pocketcode.entiy.ContentModel;
-import com.brioal.pocketcode.entiy.MyUser;
-import com.brioal.pocketcode.interfaces.ActivityInterFace;
-import com.brioal.pocketcode.util.BrioalConstan;
+import com.brioal.pocketcode.entiy.User;
+import com.brioal.pocketcode.util.Constants;
 import com.brioal.pocketcode.util.ClipboardUtil;
 import com.brioal.pocketcode.util.NetWorkUtil;
 import com.brioal.pocketcode.util.StatusBarUtils;
 import com.brioal.pocketcode.util.ThemeUtil;
 import com.brioal.pocketcode.util.ToastUtils;
+import com.brioal.pocketcode.view.MyGridView;
 import com.brioal.pocketcode.view.Tag;
 
 import org.jsoup.Jsoup;
@@ -48,7 +47,7 @@ import butterknife.Bind;
 import butterknife.ButterKnife;
 import cn.bmob.v3.listener.SaveListener;
 
-public class AddContentActivity extends AppCompatActivity implements View.OnClickListener, ActivityInterFace {
+public class AddContentActivity extends BaseActivity implements View.OnClickListener {
 
 
     @Bind(R.id.add_toolBar)
@@ -62,11 +61,11 @@ public class AddContentActivity extends AppCompatActivity implements View.OnClic
     @Bind(R.id.add_tag)
     TextView addTag;
     @Bind(R.id.add_tag_layout)
-    LinearLayout addTagLayout;
+    MyGridView addTagLayout;
     @Bind(R.id.activity_add_content)
     CoordinatorLayout activityAddContent;
     private Context mContext;
-    private MyUser user;
+    private User user;
     private List<String> mTags;
     private String title;
     private String desc;
@@ -78,18 +77,6 @@ public class AddContentActivity extends AppCompatActivity implements View.OnClic
 
     private List<String> mLocalTags;
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        mContext = this;
-        mHelper = new DBHelper(mContext, "PocketCode.db3", null, 1);
-        setContentView(R.layout.activity_add_content);
-        ButterKnife.bind(this);
-        initBar();
-        initData();
-        initActions();
-        initView();
-    }
 
     @Override
     public void initBar() {
@@ -106,20 +93,10 @@ public class AddContentActivity extends AppCompatActivity implements View.OnClic
     }
 
     @Override
-    public void initView() {
-        dialog = new ProgressDialog(mContext);
-        dialog.setTitle("请稍等");
-        dialog.setMessage("正在发表,请稍等");
-        dialog.setCancelable(false);
-        builder = new AlertDialog.Builder(mContext);
-        builder.setTitle("警告");
-        builder.setCancelable(false);
-        builder.setPositiveButton("确定", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                dialog.dismiss();
-            }
-        });
+    public void initView(Bundle savedInstanceState) {
+        setContentView(R.layout.activity_add_content);
+        ButterKnife.bind(this);
+        initActions();
         mEtUrl.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -135,16 +112,34 @@ public class AddContentActivity extends AppCompatActivity implements View.OnClic
             public void afterTextChanged(Editable s) {
                 //获取标题
                 if (NetWorkUtil.isNetworkConnected(mContext)) {
-                    dialog.setMessage("正在获取标题");
-                    dialog.show();
+                    showProgressDialog("请稍等", "正在获取标题");
                     MessageAsy task = new MessageAsy();
                     task.execute(s.toString());
                 } else {
-                    builder.setMessage("当前网络不可用,无法自动获取标题");
-                    builder.create().show();
+                    ToastUtils.showToast(mContext, "网络不可用,无法获取标题");
                 }
             }
         });
+    }
+
+    public void showProgressDialog(String title, String message) {
+        dialog = new ProgressDialog(mContext);
+        dialog.setTitle(title);
+        dialog.setMessage(message);
+        dialog.setCancelable(false);
+    }
+
+    public void showNoticeDialog(String title, String message) {
+        builder = new AlertDialog.Builder(mContext);
+        builder.setTitle(title).setMessage(message);
+        builder.setCancelable(false);
+        builder.setPositiveButton("确定", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+            }
+        });
+        builder.create().show();
     }
 
 
@@ -196,7 +191,7 @@ public class AddContentActivity extends AppCompatActivity implements View.OnClic
 
     //获取当前属性
     public void initData() {
-        mLocalTags = BrioalConstan.getmDataUtil(mContext).getLocalTag();
+        mLocalTags = Constants.getmDataUtil(mContext).getLocalTag();
         if (mTags == null) {
             mTags = new ArrayList<>();
         } else {
@@ -207,16 +202,14 @@ public class AddContentActivity extends AppCompatActivity implements View.OnClic
 
     //添加文章
     private void addContent() {
-        user = BrioalConstan.getmLocalUser(mContext).getUser();
+        user = Constants.getmDataUtil(mContext).getUserLocal();
         if (user == null) {
             ToastUtils.showToast(mContext, "未登陆,请登陆后再操作~");
             startActivity(new Intent(mContext, LoginAndRegisterActivity.class));
             return;
         }
         if (NetWorkUtil.isNetworkConnected(mContext)) {
-            dialog.setMessage("正在发表,请稍等....");
-            dialog.setCancelable(false);
-            dialog.show();
+            showProgressDialog("请稍等", "正在发表,请稍等....");
             title = mEtTitle.getText().toString();
             desc = mEtDesc.getText().toString();
             url = mEtUrl.getText().toString();
@@ -235,23 +228,24 @@ public class AddContentActivity extends AppCompatActivity implements View.OnClic
                 @Override
                 public void onSuccess() {
                     Log.i(TAG, "onSuccess: 保存数据到网络成功");
-                    dialog.dismiss();
+                    if (dialog.isShowing()) {
+                        dialog.dismiss();
+                    }
+                    setResult(RESULT_OK);
                     finish();
+                    overridePendingTransition(R.anim.anim_pop_in, R.anim.anim_pop_out);
                 }
 
                 @Override
                 public void onFailure(int i, String s) {
-                    Log.i(TAG, "onFailure: 保存数据到网络失败" + s);
+                    showNoticeDialog("错误", s);
                 }
             });
 
         } else {
-            builder.setMessage("当前网络不可用,请等网络可用时重试");
+            showNoticeDialog("错误", "当前网络不可用,请等网络可用时重试");
         }
     }
-
-
-    //添加标签
 
     //判断是否有内容，有就保存
     public void judgeContent() {
@@ -348,7 +342,7 @@ public class AddContentActivity extends AppCompatActivity implements View.OnClic
 
     public void saveTags() {
         SQLiteDatabase db = mHelper.getReadableDatabase();
-        db.execSQL("delete from Tag where _id > 0");
+        db.execSQL("deleteUserLocal from Tag where _id > 0");
         for (int i = 0; i < mTags.size(); i++) {
             db.execSQL("insert into Tag values ( null , ? )", new Object[]{mTags.get(i)});
         }

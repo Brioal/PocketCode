@@ -1,17 +1,16 @@
 package com.brioal.pocketcode.activity;
 
-import android.content.Context;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
 
-import com.brioal.pocketcode.view.swipeback.app.SwipeBackActivity;
-import com.brioal.pocketcode.util.StatusBarUtils;
 import com.brioal.pocketcode.R;
 import com.brioal.pocketcode.fragment.ShareListFragment;
-import com.brioal.pocketcode.interfaces.ActivityInterFace;
+import com.brioal.pocketcode.interfaces.ActivityFormat;
+import com.brioal.pocketcode.util.StatusBarUtils;
 import com.brioal.pocketcode.util.ThemeUtil;
+import com.brioal.pocketcode.view.swipeback.app.SwipeBackActivity;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
@@ -22,25 +21,14 @@ import butterknife.ButterKnife;
  * 从本地读取和从网路加载
  * 提供添加分享功能 ,删除分享功能 , 返回分享的数据数量
  */
-public class ShareListActivity extends SwipeBackActivity implements ActivityInterFace {
+public class ShareListActivity extends SwipeBackActivity implements ActivityFormat {
 
     @Bind(R.id.toolBar)
     Toolbar mToolBar;
-    private Context mContext;
 
     @Override
     public void setView() {
         getSupportFragmentManager().beginTransaction().add(R.id.share_container, new ShareListFragment()).commit();
-    }
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        mContext = this;
-        setContentView(R.layout.activity_share_list);
-        ButterKnife.bind(this);
-        initBar();
-        setView();
     }
 
     @Override
@@ -69,8 +57,14 @@ public class ShareListActivity extends SwipeBackActivity implements ActivityInte
     }
 
     @Override
-    public void initView() {
+    public void initView(Bundle savedInstanceState) {
+        setContentView(R.layout.activity_share_list);
+        ButterKnife.bind(this);
+    }
 
+    @Override
+    public void loadDataNet() {
+        mHandler.sendEmptyMessage(0);
     }
 
     @Override

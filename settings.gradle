@@ -1,1 +1,1 @@
-include ':app', ':circlrbutton'
+include ':app', ':circlrbutton', ':lib'

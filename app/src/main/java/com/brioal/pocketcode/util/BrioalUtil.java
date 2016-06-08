@@ -3,7 +3,7 @@ package com.brioal.pocketcode.util;
 import android.content.Context;
 import android.content.SharedPreferences;
 
-/**
+/**保存APP的信息
  * Created by brioal on 16-4-16.
  */
 public class BrioalUtil {

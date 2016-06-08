@@ -1,6 +1,7 @@
 package com.brioal.pocketcode.adapter;
 
 import android.content.Context;
+import android.content.Intent;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -9,9 +10,10 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.brioal.pocketcode.R;
+import com.brioal.pocketcode.activity.WebViewActivity;
 import com.brioal.pocketcode.entiy.CollectEnity;
 import com.brioal.pocketcode.entiy.ContentModel;
-import com.brioal.pocketcode.entiy.MyUser;
+import com.brioal.pocketcode.entiy.User;
 import com.brioal.pocketcode.view.CircleImageView;
 import com.bumptech.glide.Glide;
 
@@ -51,19 +53,20 @@ public class CollectAdapter extends RecyclerView.Adapter<CollectAdapter.CollectV
         BmobQuery<ContentModel> messageQuery = new BmobQuery<>();
         messageQuery.getObject(mContext, enity.getmMessageId(), new GetListener<ContentModel>() {
             @Override
-            public void onSuccess(ContentModel contentModel) {
+            public void onSuccess(final ContentModel contentModel) {
                 Log.i(TAG, "onSuccess:加载文章成功 ");
                 holder.mTitle.setText(contentModel.getmTitle());
                 holder.mDesc.setText(contentModel.getmDesc());
-                BmobQuery<MyUser> query = new BmobQuery<MyUser>();
+                BmobQuery<User> query = new BmobQuery<User>();
                 query.addWhereEqualTo("objectId", contentModel.getmHeadObject());
-                query.findObjects(mContext, new FindListener<MyUser>() {
+                query.findObjects(mContext, new FindListener<User>() {
                     @Override
-                    public void onSuccess(List<MyUser> object) {
+                    public void onSuccess(List<User> object) {
                         Log.i(TAG, "onSuccess: 查询用户成功");
-                        MyUser user = object.get(0);
+                        User user = object.get(0);
                         String mUrl = user.getmHeadUrl(mContext);
                         Glide.with(mContext).load(mUrl).into((holder).mHead);
+                        contentModel.setmHeadUrl(mUrl);
                     }
 
                     @Override
@@ -72,10 +75,18 @@ public class CollectAdapter extends RecyclerView.Adapter<CollectAdapter.CollectV
                     }
                 });
                 holder.mClassify.setText(contentModel.getmClassify());
-                holder.mParise.setText(contentModel.getmPraise() + "");
+                holder.mPraise.setText(contentModel.getmPraise() + "");
                 holder.mMsg.setText(contentModel.getmComment() + "");
                 holder.mRead.setText(contentModel.getmRead() + "");
                 holder.mCollect.setText(contentModel.getmCollect() + "");
+                holder.itemView.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        Intent intent = new Intent(mContext, WebViewActivity.class);
+                        intent.putExtra("MessageId", contentModel.getObjectId());
+                        mContext.startActivity(intent);
+                    }
+                });
             }
 
 
@@ -101,7 +112,7 @@ public class CollectAdapter extends RecyclerView.Adapter<CollectAdapter.CollectV
         @Bind(R.id.item_content_classify)
         TextView mClassify;
         @Bind(R.id.item_content_parise)
-        TextView mParise;
+        TextView mPraise;
         @Bind(R.id.item_content_msg)
         TextView mMsg;
         @Bind(R.id.item_content_collect)

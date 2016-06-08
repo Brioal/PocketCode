@@ -1,21 +1,22 @@
 package com.brioal.pocketcode.activity;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.view.ViewPager;
-import android.support.v7.app.AppCompatActivity;
 
-import com.brioal.pocketcode.util.StatusBarUtils;
 import com.brioal.pocketcode.R;
+import com.brioal.pocketcode.base.BaseActivity;
 import com.brioal.pocketcode.fragment.JoinFragment;
 import com.brioal.pocketcode.fragment.LoginFragment;
+import com.brioal.pocketcode.util.StatusBarUtils;
 
 import butterknife.ButterKnife;
 
-public class LoginAndRegisterActivity extends AppCompatActivity {
+public class LoginAndRegisterActivity extends BaseActivity {
 
     TabLayout mTab;
     ViewPager mContainer;
@@ -27,12 +28,22 @@ public class LoginAndRegisterActivity extends AppCompatActivity {
     private ViewPagerAdapter mAdapter;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+    public void initView(Bundle savedInstanceState) {
+        super.initView(savedInstanceState);
         setContentView(R.layout.activity_login_and_register);
         ButterKnife.bind(this);
         initId();
         initTab();
+    }
+
+    @Override
+    public void loadDataNet() {
+        super.loadDataNet();
+    }
+
+    @Override
+    public void setView() {
+        super.setView();
     }
 
     private void initTab() {
@@ -74,6 +85,16 @@ public class LoginAndRegisterActivity extends AppCompatActivity {
         @Override
         public CharSequence getPageTitle(int position) {
             return mTitles[position];
+        }
+    }
+
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == 0 && resultCode == RESULT_OK) {
+            setResult(RESULT_OK);
+            finish();
         }
     }
 }

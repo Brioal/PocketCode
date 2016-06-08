@@ -1,6 +1,6 @@
 package com.brioal.pocketcode.activity;
 
-import android.content.Context;
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
@@ -8,7 +8,7 @@ import android.view.MenuItem;
 
 import com.brioal.pocketcode.R;
 import com.brioal.pocketcode.fragment.AttentionFragment;
-import com.brioal.pocketcode.interfaces.ActivityInterFace;
+import com.brioal.pocketcode.interfaces.ActivityFormat;
 import com.brioal.pocketcode.util.StatusBarUtils;
 import com.brioal.pocketcode.util.ThemeUtil;
 import com.brioal.pocketcode.view.swipeback.app.SwipeBackActivity;
@@ -16,14 +16,11 @@ import com.brioal.pocketcode.view.swipeback.app.SwipeBackActivity;
 import butterknife.Bind;
 import butterknife.ButterKnife;
 
-public class AttentionActivity extends SwipeBackActivity implements ActivityInterFace {
+public class AttentionActivity extends SwipeBackActivity implements ActivityFormat {
 
 
     @Bind(R.id.toolBar)
     Toolbar mToolBar;
-
-    private Context mContext;
-
 
     @Override
     public void initBar() {
@@ -45,8 +42,9 @@ public class AttentionActivity extends SwipeBackActivity implements ActivityInte
     }
 
     @Override
-    public void initView() {
-
+    public void initView(Bundle savedInstanceState) {
+        setContentView(R.layout.activity_attention);
+        ButterKnife.bind(this);
     }
 
     @Override
@@ -55,13 +53,8 @@ public class AttentionActivity extends SwipeBackActivity implements ActivityInte
     }
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        mContext = this;
-        setContentView(R.layout.activity_attention);
-        ButterKnife.bind(this);
-        initBar();
-        setView();
+    public void loadDataNet() {
+        mHandler.sendEmptyMessage(0);
     }
 
     @Override
@@ -78,5 +71,11 @@ public class AttentionActivity extends SwipeBackActivity implements ActivityInte
                 break;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        loadDataNet();
     }
 }

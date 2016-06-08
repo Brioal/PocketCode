@@ -31,23 +31,23 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:gravity="center_vertical|left"
-                    android:typeface="serif"
-                    android:text="标题"
-                    android:maxLines="2"
                     android:ellipsize="end"
+                    android:gravity="center_vertical|left"
+                    android:maxLines="2"
+                    android:text="标题"
                     android:textColor="@color/colorBlack"
-                    android:textSize="16sp" />
+                    android:textSize="16sp"
+                    android:typeface="serif" />
 
                 <TextView
                     android:id="@+id/item_content_desc"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:typeface="serif"
                     android:maxLines="1"
                     android:text="描述"
                     android:textColor="@color/colorBlack"
-                    android:textSize="13sp" />
+                    android:textSize="13sp"
+                    android:typeface="serif" />
 
             </LinearLayout>
 
@@ -69,14 +69,14 @@
 
             <TextView
                 android:id="@+id/item_content_classify"
-                android:typeface="serif"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_vertical|left"
                 android:gravity="center"
                 android:text="分类"
                 android:textColor="@color/colorBlack"
-                android:textSize="13sp" />
+                android:textSize="13sp"
+                android:typeface="serif" />
 
 
             <View
@@ -84,23 +84,24 @@
                 android:layout_height="match_parent"
                 android:layout_weight="1" />
 
-            <TextView
-                android:typeface="serif"
+            <CheckBox
                 android:id="@+id/item_content_parise"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:layout_marginLeft="10dp"
-                android:drawableLeft="@mipmap/ic_parise_normal"
+                android:button="@null"
+                android:clickable="false"
+                android:drawableLeft="@drawable/ic_parise"
                 android:gravity="center"
                 android:text=" 0"
                 android:textColor="@color/colorBlack"
-                android:textSize="13sp" />
+                android:textSize="13sp"
+                android:typeface="serif" />
 
             <TextView
                 android:id="@+id/item_content_msg"
                 android:layout_width="wrap_content"
-                android:typeface="serif"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_vertical|right"
                 android:layout_marginLeft="10dp"
@@ -108,25 +109,27 @@
                 android:gravity="center"
                 android:text="0"
                 android:textColor="@color/colorBlack"
-                android:textSize="13sp" />
+                android:textSize="13sp"
+                android:typeface="serif" />
 
-            <TextView
+            <CheckBox
                 android:id="@+id/item_content_collect"
                 android:layout_width="wrap_content"
-                android:typeface="serif"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_vertical|right"
                 android:layout_marginLeft="10dp"
-                android:drawableLeft="@mipmap/ic_collect_normal"
+                android:button="@null"
+                android:clickable="false"
+                android:drawableLeft="@drawable/ic_collect"
                 android:gravity="center"
                 android:text="0"
                 android:textColor="@color/colorBlack"
-                android:textSize="13sp" />
+                android:textSize="13sp"
+                android:typeface="serif" />
 
             <TextView
                 android:id="@+id/item_content_read"
                 android:layout_width="wrap_content"
-                android:typeface="serif"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_vertical|right"
                 android:layout_marginLeft="10dp"
@@ -134,7 +137,8 @@
                 android:gravity="center"
                 android:text="0"
                 android:textColor="@color/colorBlack"
-                android:textSize="13sp" />
+                android:textSize="13sp"
+                android:typeface="serif" />
 
         </LinearLayout>
     </LinearLayout>

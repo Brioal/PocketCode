@@ -2,7 +2,7 @@ package com.brioal.pocketcode.entiy;
 
 import cn.bmob.v3.BmobObject;
 
-/**
+/**评论实体类
  * Created by Brioal on 2016/6/3.
  */
 
@@ -12,6 +12,10 @@ public class CommentModel extends BmobObject {
     private String mParent ; //所属的父节点
     private String mMessageId ; //所属的文章id
 
+
+    public CommentModel() {
+    }
+
     public CommentModel(String mUserId, String mContent, String mParent, String mMessageId) {
         this.mUserId = mUserId;
         this.mContent = mContent;
@@ -19,35 +23,17 @@ public class CommentModel extends BmobObject {
         this.mMessageId = mMessageId;
     }
 
-    public void setmMessageId(String mMessageId) {
-        this.mMessageId = mMessageId;
-    }
-
-    public String getmMessageId() {
-        return mMessageId;
-    }
-
     public String getmUserId() {
         return mUserId;
     }
 
-    public void setmUserId(String mUserId) {
-        this.mUserId = mUserId;
-    }
 
     public String getmContent() {
         return mContent;
-    }
-
-    public void setmContent(String mContent) {
-        this.mContent = mContent;
     }
 
     public String getmParent() {
         return mParent;
     }
 
-    public void setmParent(String mParent) {
-        this.mParent = mParent;
-    }
 }

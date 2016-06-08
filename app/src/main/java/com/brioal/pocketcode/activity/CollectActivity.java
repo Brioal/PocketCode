@@ -1,6 +1,5 @@
 package com.brioal.pocketcode.activity;
 
-import android.content.Context;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
@@ -9,7 +8,7 @@ import android.view.MenuItem;
 
 import com.brioal.pocketcode.R;
 import com.brioal.pocketcode.fragment.CollectListFragment;
-import com.brioal.pocketcode.interfaces.ActivityInterFace;
+import com.brioal.pocketcode.interfaces.ActivityFormat;
 import com.brioal.pocketcode.util.StatusBarUtils;
 import com.brioal.pocketcode.util.ThemeUtil;
 import com.brioal.pocketcode.view.swipeback.app.SwipeBackActivity;
@@ -22,31 +21,17 @@ import butterknife.ButterKnife;
  * 在收藏类中查询文章的Id
  * 在文章中查询数据
  */
-public class CollectActivity extends SwipeBackActivity implements ActivityInterFace {
+public class CollectActivity extends SwipeBackActivity implements ActivityFormat {
 
 
     @Bind(R.id.toolBar)
     Toolbar mToolBar;
-    private Context mContext;
-    private String TAG = "FavoriteInfo";
 
 
     @Override
     public void setView() {
-
+        getSupportFragmentManager().beginTransaction().add(R.id.collect_container, new CollectListFragment()).commit();
     }
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        mContext = this;
-        setContentView(R.layout.activity_collect);
-        ButterKnife.bind(this);
-        initBar();
-        initView();
-
-    }
-
 
     public void initBar() {
         mToolBar.setTitle("我的收藏");
@@ -67,14 +52,22 @@ public class CollectActivity extends SwipeBackActivity implements ActivityInterF
     }
 
     @Override
-    public void initView() {
-        getSupportFragmentManager().beginTransaction().add(R.id.collect_container, new CollectListFragment()).commit();
+    public void initView(Bundle savedInstanceState) {
+        setContentView(R.layout.activity_collect);
+        ButterKnife.bind(this);
     }
+
 
     @Override
     protected void onResume() {
         super.onResume();
         initTheme();
+    }
+
+    @Override
+    public void loadDataNet() {
+        super.loadDataNet();
+        mHandler.sendEmptyMessage(0);
     }
 
     @Override

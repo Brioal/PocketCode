@@ -18,7 +18,7 @@ import java.util.List;
 import butterknife.Bind;
 import butterknife.ButterKnife;
 
-/**
+/**分享列表的适配器
  * Created by Brioal on 2016/5/18.
  */
 public class ShareListAdapter extends RecyclerView.Adapter<ShareListAdapter.ShareListViewHolder> {
@@ -53,9 +53,7 @@ public class ShareListAdapter extends RecyclerView.Adapter<ShareListAdapter.Shar
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(mContext, WebViewActivity.class);
-                intent.putExtra("Url", model.getmUrl());
-                intent.putExtra("Title", model.getmTitle());
-                intent.putExtra("Id", model.getObjectId());
+                intent.putExtra("MessageId", model.getObjectId());
                 mContext.startActivity(intent);
             }
         });

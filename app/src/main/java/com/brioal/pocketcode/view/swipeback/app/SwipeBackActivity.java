@@ -4,7 +4,7 @@ package com.brioal.pocketcode.view.swipeback.app;
 import android.os.Bundle;
 import android.view.View;
 
-import com.brioal.pocketcode.view.swipeback.BaseActivity;
+import com.brioal.pocketcode.base.BaseActivity;
 import com.brioal.pocketcode.view.swipeback.SwipeBackLayout;
 import com.brioal.pocketcode.view.swipeback.Utils;
 

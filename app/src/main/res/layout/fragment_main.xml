@@ -15,18 +15,17 @@
             android:layout_centerInParent="true"
             android:gravity="center"
             android:text="暂无数据~"
-            android:typeface="sans"
-            android:textSize="20sp" />
+            android:textSize="20sp"
+            android:typeface="sans" />
 
         <android.support.v7.widget.RecyclerView
-            android:background="@color/colorWhite"
             android:id="@+id/fragment_main_recyclerView"
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="match_parent"
+            android:background="@color/colorWhite">
 
         </android.support.v7.widget.RecyclerView>
     </RelativeLayout>
-    android:id="@+id/fragment_main_recyclerView"
 
 </android.support.v4.widget.SwipeRefreshLayout>
 

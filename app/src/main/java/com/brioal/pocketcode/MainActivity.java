@@ -1,9 +1,6 @@
 package com.brioal.pocketcode;
 
-import android.content.Context;
 import android.content.Intent;
-import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
@@ -21,7 +18,6 @@ import android.support.v4.view.GravityCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -37,20 +33,19 @@ import com.brioal.pocketcode.activity.LoginAndRegisterActivity;
 import com.brioal.pocketcode.activity.ShareListActivity;
 import com.brioal.pocketcode.activity.ThemeChooseActivity;
 import com.brioal.pocketcode.activity.UserInfoActivity;
+import com.brioal.pocketcode.base.BaseActivity;
 import com.brioal.pocketcode.database.DBHelper;
 import com.brioal.pocketcode.entiy.ClassifyModel;
-import com.brioal.pocketcode.entiy.MyUser;
+import com.brioal.pocketcode.entiy.User;
 import com.brioal.pocketcode.fragment.ContentFragment;
 import com.brioal.pocketcode.fragment.MainFragment;
-import com.brioal.pocketcode.interfaces.ActivityInterFace;
-import com.brioal.pocketcode.util.BrioalConstan;
+import com.brioal.pocketcode.util.Constants;
 import com.brioal.pocketcode.util.NetWorkUtil;
 import com.brioal.pocketcode.util.StatusBarUtils;
 import com.brioal.pocketcode.util.ThemeUtil;
 import com.brioal.pocketcode.view.CircleImageView;
 import com.bumptech.glide.Glide;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import butterknife.Bind;
@@ -59,8 +54,8 @@ import cn.bmob.v3.BmobQuery;
 import cn.bmob.v3.listener.FindListener;
 import cn.bmob.v3.listener.GetListener;
 
-public class MainActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener, View.OnClickListener, ActivityInterFace {
+public class MainActivity extends BaseActivity
+        implements NavigationView.OnNavigationItemSelectedListener, View.OnClickListener {
 
     @Bind(R.id.main_toolbar)
     Toolbar mToolbar;
@@ -86,7 +81,6 @@ public class MainActivity extends AppCompatActivity
     private long lastClick = 0;
 
 
-    private Context mContext;
     private ViewPagerAdapter mAdapter;
     private List<ClassifyModel> mClassifies; //数据源
     private DBHelper mHelper; //数据库操作类
@@ -104,7 +98,7 @@ public class MainActivity extends AppCompatActivity
         }
     };
     private String TAG = "MainInfo";
-    private MyUser user;
+    private User user;
     private int FAVORITE_REQUESTCODE = 4;
     private int SHARE_REQUESTCODE = 5;
     private int LOGIN_REQUESTION = 1;
@@ -113,6 +107,12 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void initBar() {
+        mToolbar.setTitle("口袋代码");
+        setSupportActionBar(mToolbar);
+        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
+                this, drawerLayout, mToolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
+        drawerLayout.setDrawerListener(toggle);
+        toggle.syncState();
 
     }
 
@@ -136,97 +136,49 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void initData() {
-        readData();
+        mClassifies = Constants.getmDataUtil(mContext).getClassifyLocal();
         if (NetWorkUtil.isNetworkConnected(mContext)) {
-            BmobQuery<ClassifyModel> query = new BmobQuery<>();
-            query.setLimit(20);
-            query.findObjects(mContext, new FindListener<ClassifyModel>() {
+            Constants.getmDataUtil(mContext).getClassifyNet(new FindListener<ClassifyModel>() {
                 @Override
                 public void onSuccess(List<ClassifyModel> list) {
-                    Log.i(TAG, "onSuccess: 加载成功" + list.size() + "条分类");
-                    mClassifies = list;
-                    mHandler.sendEmptyMessage(0);
+                    Log.i(TAG, "onSuccess: 加载网络分类数据成功" + list.size());
+                    if (list.size() > 0) {
+                        mClassifies = list;
+                        mHandler.sendEmptyMessage(0);
+                    }
                 }
 
                 @Override
                 public void onError(int i, String s) {
-                    Log.i(TAG, "onError: 加载失败" + s);
+                    Log.i(TAG, "onError: 加载网络分类数据失败" + s);
                 }
             });
         }
     }
 
-    //读取本地数据
-    private void readData() {
-        if (mClassifies == null) {
-            mClassifies = new ArrayList<>();
-        } else {
-            mClassifies.clear();
-        }
-        SQLiteDatabase database = mHelper.getReadableDatabase();
-        Cursor cursor = database.rawQuery("select * from Classify", null);
-        while (cursor.moveToNext()) {
-            ClassifyModel model = new ClassifyModel(cursor.getInt(1), cursor.getString(2));
-            mClassifies.add(model);
-        }
-        cursor.close();
-        database.close();
-        mHandler.sendEmptyMessage(0);
-    }
 
     @Override
     protected void onPause() {
         super.onPause();
-        saveData();
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        saveData();
+        Constants.getmDataUtil(mContext).saveClassifyLocal(mClassifies);
     }
 
-    //保存数据
-    public void saveData() {
-        SQLiteDatabase db = mHelper.getReadableDatabase();
-        db.execSQL("delete from Classify where _id > 0"); //清空
-        for (int i = 0; i < mClassifies.size(); i++) {
-            ClassifyModel model = mClassifies.get(i);
-            db.execSQL("insert into Classify values ( null , ? , ? )", new Object[]{
-                    model.getmId(),
-                    model.getmClassify()
-            });
-        }
-        db.close();
-        Log.i(TAG, "saveData: 分类数据保存到本地成功");
-    }
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        mContext = this;
-        mHelper = BrioalConstan.getDbHelper(mContext);
-        setContentView(R.layout.activity_main);
-        ButterKnife.bind(this);
-        initView();
+    public void loadDataNet() {
+        super.loadDataNet();
         new Thread(mRunnable).start();
     }
 
     @Override
-    protected void onResume() {
-        super.onResume();
-        initTheme();
-    }
-
-
-    @Override
-    public void initView() {
-        mToolbar.setTitle("口袋代码");
-        setSupportActionBar(mToolbar);
-        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
-                this, drawerLayout, mToolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
-        drawerLayout.setDrawerListener(toggle);
-        toggle.syncState();
+    public void initView(Bundle savedInstanceState) {
+        setContentView(R.layout.activity_main);
+        ButterKnife.bind(this);
         if (navView.getHeaderCount() == 0) {
             nav_headView = LayoutInflater.from(mContext).inflate(R.layout.nav_header_main, drawerLayout, false);
             navView.addHeaderView(nav_headView);
@@ -235,12 +187,17 @@ public class MainActivity extends AppCompatActivity
         mName = (TextView) nav_headView.findViewById(R.id.nav_head_name);
         mDesc = (TextView) nav_headView.findViewById(R.id.nav_head_desc);
         navView.setNavigationItemSelectedListener(this);
-        initUserInfo();
+    }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        initUserInfo();
     }
 
     public void initUserInfo() {
-        user = BrioalConstan.getmLocalUser(mContext).getUser();
+        //初始化首页用户信息
+        user = Constants.getmDataUtil(mContext).getUserLocal();
         if (user == null) { //未登陆
             mDesc.setVisibility(View.GONE);
             mName.setText("点击登录");
@@ -257,7 +214,6 @@ public class MainActivity extends AppCompatActivity
                 }
             });
         } else { //已登陆
-
             Glide.with(mContext).load(user.getmHeadUrl(mContext)).into(mHead);
             mName.setText(user.getUsername());
             mDesc.setText(user.getmDesc() == null || user.getmDesc().isEmpty() ? "这个人很懒,什么都没留下~" : user.getmDesc());
@@ -265,8 +221,6 @@ public class MainActivity extends AppCompatActivity
                 @Override
                 public void onClick(View v) {
                     Intent intent = new Intent(mContext, UserInfoActivity.class);
-                    intent.putExtra("User", user);
-                    intent.putExtra("Type", 0);
                     startActivity(intent);
                 }
             });
@@ -274,20 +228,19 @@ public class MainActivity extends AppCompatActivity
                 @Override
                 public void onClick(View v) {
                     Intent intent = new Intent(mContext, UserInfoActivity.class);
-                    intent.putExtra("User", user);
-                    intent.putExtra("Type", 0);
+
                     startActivity(intent);
                 }
             });
             if (NetWorkUtil.isNetworkConnected(mContext)) {
-                BmobQuery<MyUser> query = new BmobQuery<>();
-                query.getObject(mContext, user.getObjectId(), new GetListener<MyUser>() {
+                BmobQuery<User> query = new BmobQuery<>();
+                query.getObject(mContext, user.getObjectId(), new GetListener<User>() {
                     @Override
-                    public void onSuccess(MyUser myUser) {
-                        Glide.with(mContext).load(myUser.getmHeadUrl(mContext)).into(mHead);
-                        mName.setText(myUser.getUsername());
-                        mDesc.setText(myUser.getmDesc() == null || myUser.getmDesc().isEmpty() ? "这个人很懒,什么都没留下~" : myUser.getmDesc());
-                        BrioalConstan.getmLocalUser(mContext).save(myUser);
+                    public void onSuccess(User user) {
+                        Glide.with(mContext).load(user.getmHeadUrl(mContext)).into(mHead);
+                        mName.setText(user.getUsername());
+                        mDesc.setText(user.getmDesc() == null || user.getmDesc().isEmpty() ? "这个人很懒,什么都没留下~" : user.getmDesc());
+                        Constants.getmDataUtil(mContext).saveUserLocal(user);
                     }
 
                     @Override
@@ -304,6 +257,8 @@ public class MainActivity extends AppCompatActivity
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == LOGIN_REQUESTION && resultCode == RESULT_OK) {
             initUserInfo();
+        } else if (requestCode == LOGIN_REQUESTION && resultCode == RESULT_CANCELED) {
+            initUserInfo(); //退出登录之后的
         }
     }
 
@@ -327,7 +282,7 @@ public class MainActivity extends AppCompatActivity
 
         if (id == R.id.nav_favorate) { // 查看我的收藏
             if (user == null) {
-                startActivity(new Intent(mContext, LoginAndRegisterActivity.class));
+                startActivityForResult(new Intent(mContext, LoginAndRegisterActivity.class), LOGIN_REQUESTION);
             } else {
                 Intent intent = new Intent(mContext, CollectActivity.class);
                 intent.putExtra("AccountId", user.getObjectId());
@@ -336,7 +291,7 @@ public class MainActivity extends AppCompatActivity
 
         } else if (id == R.id.nav_share) { //查看我的分享
             if (user == null) {
-                startActivity(new Intent(mContext, LoginAndRegisterActivity.class));
+                startActivityForResult(new Intent(mContext, LoginAndRegisterActivity.class), LOGIN_REQUESTION);
             } else {
                 Intent intent = new Intent(mContext, ShareListActivity.class);
                 intent.putExtra("AccountId", user.getObjectId());
@@ -345,7 +300,11 @@ public class MainActivity extends AppCompatActivity
         } else if (id == R.id.nav_theme) {
             startActivity(new Intent(mContext, ThemeChooseActivity.class));
         } else if (id == R.id.nav_attention) {
-            startActivity(new Intent(mContext, AttentionActivity.class));
+            if (user == null) {
+                startActivityForResult(new Intent(mContext, LoginAndRegisterActivity.class), LOGIN_REQUESTION);
+            } else {
+                startActivity(new Intent(mContext, AttentionActivity.class));
+            }
         } else if (id == R.id.nav_about) {
             startActivity(new Intent(mContext, AboutActivity.class));
         }

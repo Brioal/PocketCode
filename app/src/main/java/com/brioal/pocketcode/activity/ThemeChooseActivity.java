@@ -1,6 +1,5 @@
 package com.brioal.pocketcode.activity;
 
-import android.content.Context;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
@@ -12,7 +11,7 @@ import android.widget.BaseAdapter;
 import android.widget.GridView;
 
 import com.brioal.pocketcode.R;
-import com.brioal.pocketcode.interfaces.ActivityInterFace;
+import com.brioal.pocketcode.interfaces.ActivityFormat;
 import com.brioal.pocketcode.util.StatusBarUtils;
 import com.brioal.pocketcode.util.ThemeUtil;
 import com.brioal.pocketcode.util.ToastUtils;
@@ -28,28 +27,14 @@ import butterknife.ButterKnife;
  * Created by Brioal on 2016/5/20.
  */
 
-public class ThemeChooseActivity extends SwipeBackActivity implements ActivityInterFace {
+public class ThemeChooseActivity extends SwipeBackActivity implements ActivityFormat {
     @Bind(R.id.theme_toolBar)
     Toolbar mToolBar;
     @Bind(R.id.theme_choose_gridView)
     GridView mGridView;
-    private Context mContext;
     private Random random;
     private GridAdapter mAdapter;
     private String[] mColors;
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        mContext = this;
-        setContentView(R.layout.dialog_theme);
-        ButterKnife.bind(this);
-
-        initBar();
-        initView();
-        setView();
-
-    }
 
     @Override
     public void initBar() {
@@ -77,8 +62,16 @@ public class ThemeChooseActivity extends SwipeBackActivity implements ActivityIn
     }
 
     @Override
-    public void initView() {
+    public void initView(Bundle savedInstanceState) {
+        setContentView(R.layout.dialog_theme);
+        ButterKnife.bind(this);
         random = new Random(16777216);
+    }
+
+    @Override
+    public void loadDataNet() {
+        super.loadDataNet();
+        mHandler.sendEmptyMessage(0);
     }
 
     @Override
